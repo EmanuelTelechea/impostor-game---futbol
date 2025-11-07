@@ -1,7 +1,18 @@
+import { LuckiestGuy_400Regular, useFonts } from "@expo-google-fonts/luckiest-guy";
 import { useRoute } from "@react-navigation/native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useContext, useEffect, useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+} from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 import { GameContext } from "../context/GameContext";
 
 export default function WordRevealScreen({ navigation }) {
@@ -13,11 +24,11 @@ export default function WordRevealScreen({ navigation }) {
     startGame,
     categories,
     setCategory: setGlobalCategory,
-    getSubCategories
+    getSubCategories,
   } = useContext(GameContext);
 
   const route = useRoute();
-  const params = route?.params ?? {}; // ← ✅ protección segura
+  const params = route?.params ?? {};
   const paramWord = params.word ?? null;
   const paramCategory = params.category ?? null;
   const paramSubCategory = params.subCategory ?? null;
@@ -28,6 +39,7 @@ export default function WordRevealScreen({ navigation }) {
   const [revealed, setRevealed] = useState(false);
 
   const flip = useSharedValue(0);
+  const [fontsLoaded] = useFonts({ LuckiestGuy_400Regular });
 
   const frontStyle = useAnimatedStyle(() => ({
     transform: [{ rotateY: `${flip.value}deg` }],
@@ -41,35 +53,27 @@ export default function WordRevealScreen({ navigation }) {
     position: "absolute",
   }));
 
-  // Si vino con categoría y subcategoría desde OfflineSetupScreen → arrancar directo
   useEffect(() => {
     if (paramCategory && paramSubCategory && players.length > 0) {
       startGame(players.length >= 5 ? 2 : 1, paramCategory, paramSubCategory);
     }
   }, [paramCategory, paramSubCategory, players]);
 
-  // sincronizar palabra del contexto o parámetro
   useEffect(() => {
     if (paramWord) {
       if (typeof setWord === "function") setWord(paramWord);
       return;
     }
 
-    // Si nos dieron categoría y subcategoría pero NO palabra, entonces sí iniciar la partida aquí
     if (!paramWord && paramCategory && paramSubCategory && players.length > 0) {
       startGame(players.length >= 5 ? 2 : 1, paramCategory, paramSubCategory);
     }
   }, [paramWord, paramCategory, paramSubCategory, players, setWord, startGame]);
 
-
-  const reveal = () => {
-    flip.value = withTiming(180, { duration: 500 });
-    setTimeout(() => setRevealed(true), 250);
-  };
-
-  const hide = () => {
-    flip.value = withTiming(0, { duration: 500 });
-    setTimeout(() => setRevealed(false), 250);
+  const toggleFlip = () => {
+    const newValue = revealed ? 0 : 180;
+    flip.value = withTiming(newValue, { duration: 600 });
+    setRevealed(!revealed);
   };
 
   const next = () => {
@@ -83,50 +87,42 @@ export default function WordRevealScreen({ navigation }) {
     }
   };
 
-  // Si no hay jugadores
+  if (!fontsLoaded) return <ActivityIndicator size="large" color="#FFD93D" />;
+
   if (!Array.isArray(players) || players.length === 0) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.title}>No hay jugadores</Text>
-      </View>
+      <LinearGradient colors={["#2E0249", "#570A57", "#A91079"]} style={styles.container}>
+        <Text style={styles.title}>No hay jugadores 😅</Text>
+      </LinearGradient>
     );
   }
 
-  // Si no hay categoría (modo manual)
   if (!category) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.title}>🎯 Elegí una categoría</Text>
-
-        {Array.isArray(categories) && categories.length > 0 ? (
-          categories.map((cat) => (
-            <TouchableOpacity
-              key={cat}
-              style={styles.button}
-              onPress={() => {
-                setCategory(cat);
-                if (typeof setGlobalCategory === "function") setGlobalCategory(cat);
-              }}
-            >
-              <Text style={styles.buttonText}>{cat.toUpperCase()}</Text>
-            </TouchableOpacity>
-          ))
-        ) : (
-          <Text style={{ color: "#ccc", marginTop: 20 }}>
-            No hay categorías disponibles
-          </Text>
-        )}
-      </View>
+      <LinearGradient colors={["#16213E", "#0F3460", "#533483"]} style={styles.container}>
+        <Text style={styles.title}>🎯 Elige una categoría</Text>
+        {categories.map((cat) => (
+          <TouchableOpacity
+            key={cat}
+            style={styles.button}
+            onPress={() => {
+              setCategory(cat);
+              if (typeof setGlobalCategory === "function") setGlobalCategory(cat);
+            }}
+          >
+            <Text style={styles.buttonText}>{cat.toUpperCase()}</Text>
+          </TouchableOpacity>
+        ))}
+      </LinearGradient>
     );
   }
 
-  // Si hay categoría pero falta subcategoría
   if (category && !subCategory) {
     const subs = getSubCategories(category);
     return (
-      <View style={styles.container}>
+      <LinearGradient colors={["#16213E", "#0F3460", "#533483"]} style={styles.container}>
         <Text style={styles.title}>📂 {category.toUpperCase()}</Text>
-        <Text style={{ color: "#fff", marginBottom: 10 }}>Elegí una subcategoría</Text>
+        <Text style={styles.subtitle}>Elegí una subcategoría</Text>
         {subs.map((sub) => (
           <TouchableOpacity
             key={sub}
@@ -134,75 +130,124 @@ export default function WordRevealScreen({ navigation }) {
             onPress={() => {
               setSubCategory(sub);
               startGame(players.length >= 5 ? 2 : 1, category, sub);
-              if (typeof setGlobalCategory === "function") setGlobalCategory(category);
             }}
           >
             <Text style={styles.buttonText}>{sub.toUpperCase()}</Text>
           </TouchableOpacity>
         ))}
-      </View>
+      </LinearGradient>
     );
   }
 
   const player = players[index];
   const displayWord = paramWord ?? contextWord ?? "Palabra no disponible";
+  const cardColor = player.color || "#FFD93D";
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>{player.name}, toca para ver tu rol</Text>
-      <Text style={styles.categoryText}>
-        Categoría: {category.toUpperCase()} / {subCategory.toUpperCase()}
+    <LinearGradient colors={["#0D1B2A", "#1B263B", "#415A77"]} style={styles.container}>
+      <Text style={styles.title}>{player.name}, tu turno 👇</Text>
+      <Text style={styles.subtitle}>
+        {category.toUpperCase()} / {subCategory.toUpperCase()}
       </Text>
 
-      <View style={styles.cardContainer}>
-        <Animated.View style={[styles.card, frontStyle]}>
-          <Text style={styles.cardText}>Toca para ver</Text>
+      {/* Carta que se gira al presionar */}
+      <TouchableOpacity
+        style={styles.cardContainer}
+        onPress={toggleFlip}
+        activeOpacity={0.9}
+      >
+        {/* Frente */}
+        <Animated.View style={[styles.card, { backgroundColor: cardColor }, frontStyle]}>
+          <Text style={styles.cardPlayer}>{player.name}</Text>
+          <Text style={styles.tapText}>Tocá para ver tu palabra 👀</Text>
         </Animated.View>
 
-        <Animated.View style={[styles.card, backStyle]}>
-          <Text style={styles.cardText}>
+        {/* Reverso */}
+        <Animated.View style={[styles.card, { backgroundColor: cardColor }, backStyle]}>
+          <Text style={styles.cardBack}>
             {String(player.id) === String(impostorId)
               ? "IMPOSTOR 😈"
-              : `Palabra:\n${displayWord}`}
+              : displayWord}
           </Text>
         </Animated.View>
-      </View>
+      </TouchableOpacity>
 
-      {!revealed ? (
-        <TouchableOpacity style={styles.button} onPress={reveal}>
-          <Text style={styles.buttonText}>Ver rol</Text>
-        </TouchableOpacity>
-      ) : (
-        <TouchableOpacity style={styles.secondaryBtn} onPress={hide}>
-          <Text style={styles.secondaryBtnText}>Ocultar</Text>
-        </TouchableOpacity>
-      )}
-
-      <TouchableOpacity style={styles.button} onPress={next}>
+      <TouchableOpacity
+        style={[styles.button, { backgroundColor: "#FF595E" }]}
+        onPress={next}
+      >
         <Text style={styles.buttonText}>
-          {index === players.length - 1 ? "Listo para jugar" : "Siguiente jugador"}
+          {index === players.length - 1 ? "🚀 Listo para jugar" : "➡️ Siguiente jugador"}
         </Text>
       </TouchableOpacity>
-    </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#1E1F2F" },
-  title: { fontSize: 24, fontWeight: "900", marginBottom: 20, color: "#fff", textAlign: "center" },
-  categoryText: { color: "#FFD93D", fontSize: 18, marginBottom: 10 },
-  button: { backgroundColor: "#6C63FF", padding: 14, borderRadius: 14, marginTop: 15, width: 240 },
-  buttonText: { color: "white", textAlign: "center", fontSize: 18, fontWeight: "bold" },
-  secondaryBtn: { backgroundColor: "#444", padding: 12, borderRadius: 12, marginTop: 8, width: 220 },
-  secondaryBtnText: { color: "white", fontSize: 16, textAlign: "center" },
-  cardContainer: { width: 280, height: 180, marginBottom: 15 },
+  container: { flex: 1, justifyContent: "center", alignItems: "center" },
+  title: {
+    fontSize: 32,
+    color: "#FFD93D",
+    marginBottom: 15,
+    fontFamily: "LuckiestGuy_400Regular",
+    textAlign: "center",
+  },
+  subtitle: {
+    fontSize: 20,
+    color: "#F8F9FA",
+    marginBottom: 25,
+    fontFamily: "LuckiestGuy_400Regular",
+    textAlign: "center",
+  },
+  cardContainer: { width: 340, height: 300, marginBottom: 25, perspective: 1000 },
   card: {
     width: "100%",
     height: "100%",
-    backgroundColor: "#FFD93D",
-    borderRadius: 20,
+    borderRadius: 28,
     justifyContent: "center",
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 8,
+    paddingHorizontal: 15,
   },
-  cardText: { fontSize: 26, fontWeight: "bold", textAlign: "center", color: "#2B2D42" },
+  cardPlayer: {
+    fontSize: 42,
+    color: "#1E1F2F",
+    fontFamily: "LuckiestGuy_400Regular",
+    textAlign: "center",
+  },
+  tapText: {
+    marginTop: 15,
+    fontSize: 20,
+    color: "#1E1F2F",
+    opacity: 0.8,
+    fontFamily: "LuckiestGuy_400Regular",
+  },
+  cardBack: {
+    fontSize: 38,
+    color: "#1E1F2F",
+    fontFamily: "LuckiestGuy_400Regular",
+    textAlign: "center",
+  },
+  button: {
+    backgroundColor: "#6C63FF",
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 16,
+    marginTop: 10,
+    shadowColor: "#000",
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+  buttonText: {
+    color: "#FFF",
+    fontSize: 20,
+    fontFamily: "LuckiestGuy_400Regular",
+    textAlign: "center",
+  },
 });

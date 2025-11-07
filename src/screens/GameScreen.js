@@ -1,6 +1,15 @@
+import { LuckiestGuy_400Regular, useFonts } from "@expo-google-fonts/luckiest-guy";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useState } from "react";
-import { Animated, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { useGameContext } from "../context/GameContext";
 
 export default function GameScreen() {
@@ -16,23 +25,12 @@ export default function GameScreen() {
     selectedCategory,
     setSelectedCategory,
     word,
-    setWord,
-    getSubCategories,
   } = useGameContext();
 
   const [index, setIndex] = useState(0);
-  const [fadeAnim] = useState(new Animated.Value(0));
+  const [fontsLoaded] = useFonts({ LuckiestGuy_400Regular });
 
-  // ✅ Animación de entrada
-  useEffect(() => {
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 600,
-      useNativeDriver: true,
-    }).start();
-  }, []);
-
-  // ✅ Cargar la categoría desde parámetros si viene de WordRevealScreen
+  // Cargar categoría desde parámetros si llega
   useEffect(() => {
     const cat = route?.params?.category;
     if (cat && typeof setSelectedCategory === "function") {
@@ -40,14 +38,13 @@ export default function GameScreen() {
     }
   }, [route?.params]);
 
-  // ✅ Inicializa los jugadores vivos solo si está vacío
+  // Inicializa los jugadores vivos si no existen aún
   useEffect(() => {
     if (alivePlayers.length === 0 && Array.isArray(players)) {
       setAlivePlayers(players);
     }
   }, [players]);
 
-  // ✅ Eliminación de jugador
   const onEliminate = (id) => {
     const updated = alivePlayers.filter((p) => p.id !== id);
     const wasImpostor = id === impostorId;
@@ -56,40 +53,22 @@ export default function GameScreen() {
     const impostoresVivos = updated.filter((p) => p.id === impostorId).length;
     const tripulantesVivos = updated.length - impostoresVivos;
 
-    console.log("---- ESTADO POST ELIMINACIÓN ----");
-    console.log("Vivos:", updated.map((p) => p.id));
-    console.log("Impostores vivos:", impostoresVivos);
-    console.log("Tripulantes vivos:", tripulantesVivos);
-    console.log("Eliminado era impostor:", wasImpostor);
-    console.log("---------------------------------");
-
     let winner = null;
 
-    // 🧩 Lógica de victoria
     if (wasImpostor) {
-      if (impostoresVivos === 0) {
-        console.log("🎉 ¡Tripulantes ganan!");
-        winner = "tripulantes";
-      }
+      if (impostoresVivos === 0) winner = "tripulantes";
     } else {
-      if (tripulantesVivos <= impostoresVivos) {
-        console.log("🕵️‍♂️ ¡Impostor gana!");
-        winner = "impostor";
-      }
+      if (tripulantesVivos <= impostoresVivos) winner = "impostor";
     }
 
-    // 🔁 Si no hay ganador, continuar partida
     if (!winner) {
-      console.log("➡️ Continuando partida...");
       setGameWinner(null);
       setAlivePlayers(updated);
       setIndex(0);
     } else {
-      console.log("🏁 Fin del juego. Ganador:", winner);
       setGameWinner(winner);
     }
 
-    // 👉 Navegar SIEMPRE a la pantalla de Eliminación
     navigation.replace("Elimination", {
       eliminatedPlayer,
       wasImpostor,
@@ -100,122 +79,116 @@ export default function GameScreen() {
 
   const currentPlayer = alivePlayers[index];
 
+  if (!fontsLoaded) return <ActivityIndicator size="large" color="#FFD93D" />;
+
   if (!currentPlayer) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.subtitle}>😵 No hay jugadores vivos.</Text>
+      <LinearGradient colors={["#16213E", "#0F3460", "#533483"]} style={styles.container}>
+        <Text style={styles.title}>😵 No hay jugadores vivos</Text>
         <TouchableOpacity
-          style={[styles.button, styles.returnButton]}
+          style={[styles.button, { backgroundColor: "#FF595E" }]}
           onPress={() => navigation.navigate("Home")}
         >
           <Text style={styles.buttonText}>Volver al inicio</Text>
         </TouchableOpacity>
-      </View>
+      </LinearGradient>
     );
   }
 
   return (
-    <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
-      <Text style={styles.turnText}>Turno actual:</Text>
-      <Text style={styles.playerName}>{currentPlayer.name}</Text>
+    <LinearGradient colors={["#0D1B2A", "#1B263B", "#415A77"]} style={styles.container}>
+      <Animated.View
+        entering={FadeIn.duration(600)}
+        exiting={FadeOut.duration(400)}
+        style={{ width: "100%", alignItems: "center" }}
+      >
+        <Text style={styles.title}>Turno actual:</Text>
+        <Text style={styles.playerName}>{currentPlayer.name}</Text>
 
-      {selectedCategory && (
-        <Text style={styles.categoryText}>
-          Categoría actual: {selectedCategory.toUpperCase()}
-        </Text>
-      )}
+        {selectedCategory && (
+          <Text style={styles.subtitle}>
+            Categoría actual: {selectedCategory.toUpperCase()}
+          </Text>
+        )}
 
-      {word && (
-        <Text style={styles.wordText}>Palabra: {word}</Text>
-      )}
+        <Text style={[styles.subtitle, { marginTop: 20 }]}>Selecciona a quién eliminar 👇</Text>
 
-      <Text style={styles.subtitle}>Selecciona a quién eliminar 👇</Text>
-
-      <View style={{ width: "100%", marginTop: 10 }}>
-        {alivePlayers.map((p) => (
-          <TouchableOpacity
-            key={p.id}
-            style={[styles.playerButton, { backgroundColor: p.color || "#444" }]}
-            onPress={() => onEliminate(p.id)}
-          >
-            <Text style={styles.eliminateText}>Eliminar a {p.name}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-    </Animated.View>
+        <View style={{ width: "100%", marginTop: 10 }}>
+          {alivePlayers.map((p) => (
+            <TouchableOpacity
+              key={p.id}
+              style={[styles.playerButton, { backgroundColor: p.color || "#444" }]}
+              onPress={() => onEliminate(p.id)}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.playerButtonText}>Eliminar a {p.name}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </Animated.View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0B0C1D",
-    alignItems: "center",
     justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
-  turnText: {
-    color: "#9EAFFF",
-    fontSize: 22,
-    marginBottom: 6,
+  title: {
+    fontSize: 32,
+    color: "#FFD93D",
+    fontFamily: "LuckiestGuy_400Regular",
+    textAlign: "center",
   },
   playerName: {
-    color: "#FFD93D",
-    fontSize: 36,
-    fontWeight: "bold",
+    fontSize: 40,
+    color: "#8CE6FF",
+    fontFamily: "LuckiestGuy_400Regular",
+    marginVertical: 10,
     textShadowColor: "#000",
     textShadowOffset: { width: 2, height: 2 },
     textShadowRadius: 6,
   },
-  categoryText: {
-    color: "#8CE6FF",
-    fontSize: 18,
-    marginTop: 10,
-  },
-  wordText: {
-    color: "#B5FF9E",
-    fontSize: 18,
-    marginTop: 5,
-    marginBottom: 10,
-  },
   subtitle: {
-    color: "#E0E0E0",
-    fontSize: 18,
-    marginTop: 10,
+    fontSize: 20,
+    color: "#F8F9FA",
+    fontFamily: "LuckiestGuy_400Regular",
     textAlign: "center",
-    marginBottom: 20,
   },
   playerButton: {
     paddingVertical: 14,
-    borderRadius: 15,
+    borderRadius: 18,
     marginVertical: 6,
     alignItems: "center",
-    width: "100%",
     shadowColor: "#000",
-    shadowOpacity: 0.5,
+    shadowOpacity: 0.4,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 3 },
+    elevation: 6,
   },
-  eliminateText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
+  playerButtonText: {
+    color: "#1E1F2F",
+    fontSize: 22,
+    fontFamily: "LuckiestGuy_400Regular",
+    textAlign: "center",
   },
   button: {
-    backgroundColor: "#6C63FF",
     paddingVertical: 14,
-    paddingHorizontal: 30,
-    borderRadius: 20,
-    marginTop: 20,
-    width: "80%",
-    alignItems: "center",
+    paddingHorizontal: 25,
+    borderRadius: 18,
+    marginTop: 25,
+    shadowColor: "#000",
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 5,
   },
   buttonText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  returnButton: {
-    backgroundColor: "#FF4E6E",
+    color: "#FFF",
+    fontSize: 20,
+    fontFamily: "LuckiestGuy_400Regular",
+    textAlign: "center",
   },
 });

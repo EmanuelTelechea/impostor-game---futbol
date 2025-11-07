@@ -21,12 +21,21 @@ export default function HomeScreen({ navigation }) {
         </TouchableOpacity>
 
         <TouchableOpacity
+          style={[styles.button, { backgroundColor: "#FF8C42" }]}
+          onPress={() => navigation.navigate("Rules")}
+          activeOpacity={0.9}
+        >
+          <Text style={styles.buttonText}>📜 Reglas</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
           style={[styles.button, { backgroundColor: "#6C63FF" }]}
           onPress={() => navigation.navigate("Settings")}
           activeOpacity={0.9}
         >
           <Text style={styles.buttonText}>⚙️ Configuración</Text>
         </TouchableOpacity>
+
       </View>
     </LinearGradient>
   );

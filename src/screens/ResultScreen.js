@@ -47,7 +47,7 @@ export default function ResultScreen() {
   const normalized = String(gameWinner).toLowerCase();
   const isImpostor = normalized === "impostor";
 
-  const title = isImpostor ? "😈 ¡El impostor ganó!" : "🚀 ¡La tripulación gana!";
+  const title = isImpostor ? "¡El impostor ganó!" : "¡La tripulación gana!";
   const color = isImpostor ? "#FF4E6E" : "#4EFF9A";
 
   const handlePlayAgain = () => {
@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.1)",
   },
   title: {
-    fontSize: 30,
+    fontSize: 42,
     textAlign: "center",
     fontFamily: "LuckiestGuy_400Regular",
     marginBottom: 50,
@@ -116,6 +116,7 @@ const styles = StyleSheet.create({
   button: {
     width: "80%",
     paddingVertical: 16,
+    paddingHorizontal: 8,
     borderRadius: 18,
     alignItems: "center",
     marginVertical: 10,

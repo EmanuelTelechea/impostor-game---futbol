@@ -1,121 +1,108 @@
+import { LuckiestGuy_400Regular, useFonts } from "@expo-google-fonts/luckiest-guy";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
 import { StyleSheet, Switch, Text, TouchableOpacity, View } from "react-native";
-import { theme } from "../styles/theme";
 
 export default function Settings({ navigation }) {
+  const [fontsLoaded] = useFonts({ LuckiestGuy_400Regular });
   const [impostors, setImpostors] = useState(1);
   const [soundEnabled, setSoundEnabled] = useState(true);
 
-  const increaseImpostors = () => {
-    setImpostors(prev => (prev < 3 ? prev + 1 : prev)); // máximo 3
+  const increaseImpostors = () => setImpostors(prev => (prev < 3 ? prev + 1 : prev));
+  const decreaseImpostors = () => setImpostors(prev => (prev > 1 ? prev - 1 : prev));
+
+  const saveSettings = async () => {
+    try {
+      await AsyncStorage.setItem("settings", JSON.stringify({ impostors, soundEnabled }));
+      navigation.goBack();
+    } catch (error) {
+      console.error("Error al guardar configuración:", error);
+    }
   };
 
-  const decreaseImpostors = () => {
-    setImpostors(prev => (prev > 1 ? prev - 1 : prev)); // mínimo 1
-  };
+  if (!fontsLoaded) return null;
 
   return (
-    <View style={styles.container}>
+    <LinearGradient colors={["#0D1B2A", "#1B263B", "#415A77"]} style={styles.container}>
       <Text style={styles.title}>⚙️ Configuración</Text>
 
-      {/* Cantidad de impostores */}
       <View style={styles.settingRow}>
         <Text style={styles.label}>Impostores:</Text>
-
         <View style={styles.counterContainer}>
           <TouchableOpacity style={styles.counterBtn} onPress={decreaseImpostors}>
             <Text style={styles.counterText}>-</Text>
           </TouchableOpacity>
-
           <Text style={styles.value}>{impostors}</Text>
-
           <TouchableOpacity style={styles.counterBtn} onPress={increaseImpostors}>
             <Text style={styles.counterText}>+</Text>
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* Sonido */}
       <View style={styles.settingRow}>
         <Text style={styles.label}>Sonidos:</Text>
-        <Switch
-          value={soundEnabled}
-          onValueChange={setSoundEnabled}
-        />
+        <Switch value={soundEnabled} onValueChange={setSoundEnabled} />
       </View>
 
-      <TouchableOpacity
-        style={styles.btn}
-        onPress={() => navigation.goBack()}
-      >
-        <Text style={styles.btnText}>⬅️ Volver</Text>
+      <TouchableOpacity style={[styles.btn, { backgroundColor: "#6C63FF" }]} onPress={saveSettings}>
+        <Text style={styles.btnText}>💾 Guardar</Text>
       </TouchableOpacity>
-    </View>
+
+      <TouchableOpacity style={[styles.btn, { backgroundColor: "#FFD93D" }]} onPress={() => navigation.goBack()}>
+        <Text style={[styles.btnText, { color: "#000" }]}>⬅️ Volver</Text>
+      </TouchableOpacity>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 25
-  },
+  container: { flex: 1, justifyContent: "center", alignItems: "center", padding: 25 },
   title: {
-    fontSize: 32,
-    fontWeight: "900",
-    color: theme.colors.text,
-    marginBottom: 40
+    fontSize: 36,
+    color: "#FFD93D",
+    fontFamily: "LuckiestGuy_400Regular",
+    marginBottom: 50,
+    textShadowColor: "rgba(0,0,0,0.6)",
+    textShadowOffset: { width: 2, height: 3 },
+    textShadowRadius: 5,
   },
   settingRow: {
     width: "85%",
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginVertical: 15
+    marginVertical: 15,
   },
   label: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: theme.colors.text
-  },
-  value: {
     fontSize: 22,
-    fontWeight: "800",
-    width: 40,
-    textAlign: "center",
-    color: theme.colors.text
+    color: "#fff",
+    fontFamily: "LuckiestGuy_400Regular",
   },
-  counterContainer: {
-    flexDirection: "row",
-    alignItems: "center"
-  },
+  counterContainer: { flexDirection: "row", alignItems: "center" },
   counterBtn: {
-    backgroundColor: theme.colors.primary,
-    width: 40,
-    height: 40,
+    backgroundColor: "#FFD93D",
+    width: 45,
+    height: 45,
     borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
-    ...theme.shadow
+    marginHorizontal: 8,
+    elevation: 5,
   },
-  counterText: {
-    fontSize: 28,
-    fontWeight: "900",
-    color: "#000"
-  },
+  counterText: { fontSize: 28, fontWeight: "900", color: "#1E1F2F" },
+  value: { fontSize: 24, color: "#fff", fontFamily: "LuckiestGuy_400Regular" },
   btn: {
-    marginTop: 50,
-    backgroundColor: theme.colors.primary,
-    paddingVertical: 14,
-    paddingHorizontal: 40,
-    borderRadius: theme.radius,
-    ...theme.shadow
+    width: "70%",
+    paddingVertical: 16,
+    borderRadius: 15,
+    alignItems: "center",
+    marginTop: 20,
+    elevation: 8,
   },
   btnText: {
-    fontWeight: "700",
-    fontSize: 18,
-    color: "#000"
-  }
+    fontSize: 22,
+    color: "#fff",
+    fontFamily: "LuckiestGuy_400Regular",
+  },
 });

@@ -1,16 +1,23 @@
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { useEffect, useState } from "react";
 import { Animated, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useGameContext } from "../context/GameContext";
 
 export default function GameScreen() {
   const navigation = useNavigation();
+  const route = useRoute();
+
   const {
     players,
     impostorId,
     alivePlayers,
     setAlivePlayers,
     setGameWinner,
+    selectedCategory,
+    setSelectedCategory,
+    word,
+    setWord,
+    getSubCategories,
   } = useGameContext();
 
   const [index, setIndex] = useState(0);
@@ -25,6 +32,14 @@ export default function GameScreen() {
     }).start();
   }, []);
 
+  // ✅ Cargar la categoría desde parámetros si viene de WordRevealScreen
+  useEffect(() => {
+    const cat = route?.params?.category;
+    if (cat && typeof setSelectedCategory === "function") {
+      setSelectedCategory(cat);
+    }
+  }, [route?.params]);
+
   // ✅ Inicializa los jugadores vivos solo si está vacío
   useEffect(() => {
     if (alivePlayers.length === 0 && Array.isArray(players)) {
@@ -33,52 +48,55 @@ export default function GameScreen() {
   }, [players]);
 
   // ✅ Eliminación de jugador
-const onEliminate = (id) => {
+  const onEliminate = (id) => {
     const updated = alivePlayers.filter((p) => p.id !== id);
-    const wasImpostor = id === impostorId; // Determinar si era impostor
-    
-    // NOTA: 'eliminated' se usa para la pantalla de animación
-    const eliminatedPlayer = alivePlayers.find((p) => p.id === id); 
+    const wasImpostor = id === impostorId;
+    const eliminatedPlayer = alivePlayers.find((p) => p.id === id);
 
     const impostoresVivos = updated.filter((p) => p.id === impostorId).length;
     const tripulantesVivos = updated.length - impostoresVivos;
 
-    // ... (Logs de consola) ...
+    console.log("---- ESTADO POST ELIMINACIÓN ----");
+    console.log("Vivos:", updated.map((p) => p.id));
+    console.log("Impostores vivos:", impostoresVivos);
+    console.log("Tripulantes vivos:", tripulantesVivos);
+    console.log("Eliminado era impostor:", wasImpostor);
+    console.log("---------------------------------");
 
     let winner = null;
 
     // 🧩 Lógica de victoria
     if (wasImpostor) {
-        if (impostoresVivos === 0) {
-            console.log("🎉 ¡Tripulantes ganan!");
-            winner = "tripulantes";
-        }
+      if (impostoresVivos === 0) {
+        console.log("🎉 ¡Tripulantes ganan!");
+        winner = "tripulantes";
+      }
     } else {
-        if (tripulantesVivos <= impostoresVivos) {
-            console.log("🕵️‍♂️ ¡Impostor gana!");
-            winner = "impostor";
-        }
+      if (tripulantesVivos <= impostoresVivos) {
+        console.log("🕵️‍♂️ ¡Impostor gana!");
+        winner = "impostor";
+      }
     }
 
-    // 1. Actualizar el estado del juego si no hay ganador
+    // 🔁 Si no hay ganador, continuar partida
     if (!winner) {
-        console.log("➡️ Continuando partida (sin navegación)...");
-        setGameWinner(null);
-        setAlivePlayers(updated);
-        setIndex(0);
+      console.log("➡️ Continuando partida...");
+      setGameWinner(null);
+      setAlivePlayers(updated);
+      setIndex(0);
     } else {
-        // Si hay ganador, la navegación final se hará después de la animación
-        setGameWinner(winner); 
+      console.log("🏁 Fin del juego. Ganador:", winner);
+      setGameWinner(winner);
     }
-    
-    // 2. Navegar SIEMPRE a la pantalla de Eliminación
-    // El juego se queda en "Elimination" si winner es null, o avanza a "Result"
-    // desde EliminationScreen.js si gameWinner ya fue seteado.
+
+    // 👉 Navegar SIEMPRE a la pantalla de Eliminación
     navigation.replace("Elimination", {
-        eliminatedPlayer,
-        wasImpostor,
+      eliminatedPlayer,
+      wasImpostor,
+      category: selectedCategory,
+      word,
     });
-};
+  };
 
   const currentPlayer = alivePlayers[index];
 
@@ -100,6 +118,16 @@ const onEliminate = (id) => {
     <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
       <Text style={styles.turnText}>Turno actual:</Text>
       <Text style={styles.playerName}>{currentPlayer.name}</Text>
+
+      {selectedCategory && (
+        <Text style={styles.categoryText}>
+          Categoría actual: {selectedCategory.toUpperCase()}
+        </Text>
+      )}
+
+      {word && (
+        <Text style={styles.wordText}>Palabra: {word}</Text>
+      )}
 
       <Text style={styles.subtitle}>Selecciona a quién eliminar 👇</Text>
 
@@ -138,6 +166,17 @@ const styles = StyleSheet.create({
     textShadowColor: "#000",
     textShadowOffset: { width: 2, height: 2 },
     textShadowRadius: 6,
+  },
+  categoryText: {
+    color: "#8CE6FF",
+    fontSize: 18,
+    marginTop: 10,
+  },
+  wordText: {
+    color: "#B5FF9E",
+    fontSize: 18,
+    marginTop: 5,
+    marginBottom: 10,
   },
   subtitle: {
     color: "#E0E0E0",

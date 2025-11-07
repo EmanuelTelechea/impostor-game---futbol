@@ -8,6 +8,8 @@ export function GameProvider({ children }) {
   const [word, setWord] = useState("");
   const [gameWinner, setGameWinner] = useState(null);
   const [alivePlayers, setAlivePlayers] = useState([]); // ✅ nuevo estado
+  const [category, setCategory] = useState(null);
+  const [subCategory, setSubCategory] = useState(null);
 
   // 🔄 Mantener vivos sincronizados con los jugadores (solo si está vacío o reiniciado)
   useEffect(() => {
@@ -98,6 +100,8 @@ const startGame = (impostorCount = 1, category = "general", subCategory = "gener
         categories: Object.keys(defaultWords), // 🔹 ["general", "futbol", "musica", "cine"]
         getSubCategories: (cat) => Object.keys(defaultWords[cat] || { general: [] }),
         defaultWords,
+        category, setCategory,
+        subCategory, setSubCategory,
       }}
     >
       {children}

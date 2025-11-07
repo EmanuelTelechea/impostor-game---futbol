@@ -13,9 +13,17 @@ export default function WordRevealScreen({ navigation }) {
     startGame,
     categories,
     setCategory: setGlobalCategory,
+    getSubCategories
   } = useContext(GameContext);
 
-  const [category, setCategory] = useState(null);
+  const route = useRoute();
+  const params = route?.params ?? {}; // ← ✅ protección segura
+  const paramWord = params.word ?? null;
+  const paramCategory = params.category ?? null;
+  const paramSubCategory = params.subCategory ?? null;
+
+  const [category, setCategory] = useState(paramCategory || null);
+  const [subCategory, setSubCategory] = useState(paramSubCategory || null);
   const [index, setIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
 
@@ -33,13 +41,26 @@ export default function WordRevealScreen({ navigation }) {
     position: "absolute",
   }));
 
-  // asignar roles y palabra en base a la categoría seleccionada
-  const assignRoles = (selectedCategory) => {
-    const impostorCount = Array.isArray(players) && players.length >= 5 ? 2 : 1;
-    if (typeof startGame === "function") {
-      startGame(impostorCount, selectedCategory);
+  // Si vino con categoría y subcategoría desde OfflineSetupScreen → arrancar directo
+  useEffect(() => {
+    if (paramCategory && paramSubCategory && players.length > 0) {
+      startGame(players.length >= 5 ? 2 : 1, paramCategory, paramSubCategory);
     }
-  };
+  }, [paramCategory, paramSubCategory, players]);
+
+  // sincronizar palabra del contexto o parámetro
+  useEffect(() => {
+    if (paramWord) {
+      if (typeof setWord === "function") setWord(paramWord);
+      return;
+    }
+
+    // Si nos dieron categoría y subcategoría pero NO palabra, entonces sí iniciar la partida aquí
+    if (!paramWord && paramCategory && paramSubCategory && players.length > 0) {
+      startGame(players.length >= 5 ? 2 : 1, paramCategory, paramSubCategory);
+    }
+  }, [paramWord, paramCategory, paramSubCategory, players, setWord, startGame]);
+
 
   const reveal = () => {
     flip.value = withTiming(180, { duration: 500 });
@@ -62,20 +83,16 @@ export default function WordRevealScreen({ navigation }) {
     }
   };
 
-  const route = useRoute();
-  const paramWord = route?.params?.word;
-  const paramCategory = route?.params?.category;
+  // Si no hay jugadores
+  if (!Array.isArray(players) || players.length === 0) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>No hay jugadores</Text>
+      </View>
+    );
+  }
 
-  // sincronizar palabra del parámetro o contexto
-  useEffect(() => {
-    if (paramWord && typeof setWord === "function") {
-      setWord(paramWord);
-    }
-  }, [paramWord, setWord]);
-
-  const displayWord = paramWord ?? contextWord ?? "Palabra no disponible";
-
-  // ---- SELECCIÓN DE CATEGORÍA ----
+  // Si no hay categoría (modo manual)
   if (!category) {
     return (
       <View style={styles.container}>
@@ -89,7 +106,6 @@ export default function WordRevealScreen({ navigation }) {
               onPress={() => {
                 setCategory(cat);
                 if (typeof setGlobalCategory === "function") setGlobalCategory(cat);
-                assignRoles(cat);
               }}
             >
               <Text style={styles.buttonText}>{cat.toUpperCase()}</Text>
@@ -104,21 +120,39 @@ export default function WordRevealScreen({ navigation }) {
     );
   }
 
-  // ---- SI NO HAY JUGADORES ----
-  if (!Array.isArray(players) || players.length === 0) {
+  // Si hay categoría pero falta subcategoría
+  if (category && !subCategory) {
+    const subs = getSubCategories(category);
     return (
       <View style={styles.container}>
-        <Text style={styles.title}>No hay jugadores</Text>
+        <Text style={styles.title}>📂 {category.toUpperCase()}</Text>
+        <Text style={{ color: "#fff", marginBottom: 10 }}>Elegí una subcategoría</Text>
+        {subs.map((sub) => (
+          <TouchableOpacity
+            key={sub}
+            style={styles.button}
+            onPress={() => {
+              setSubCategory(sub);
+              startGame(players.length >= 5 ? 2 : 1, category, sub);
+              if (typeof setGlobalCategory === "function") setGlobalCategory(category);
+            }}
+          >
+            <Text style={styles.buttonText}>{sub.toUpperCase()}</Text>
+          </TouchableOpacity>
+        ))}
       </View>
     );
   }
 
   const player = players[index];
+  const displayWord = paramWord ?? contextWord ?? "Palabra no disponible";
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>{player.name}, toca para ver tu rol</Text>
-      <Text style={styles.categoryText}>Categoría: {category.toUpperCase()}</Text>
+      <Text style={styles.categoryText}>
+        Categoría: {category.toUpperCase()} / {subCategory.toUpperCase()}
+      </Text>
 
       <View style={styles.cardContainer}>
         <Animated.View style={[styles.card, frontStyle]}>

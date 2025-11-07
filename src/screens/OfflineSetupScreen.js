@@ -67,20 +67,41 @@ export default function OfflineSetupScreen({ navigation }) {
   };
 
   // 🚀 Iniciar partida
-  const startOfflineGame = () => {
-    const impostorCount = safePlayers.length >= 5 ? 2 : 1;
-    const result = startGame(impostorCount, category, subCategory);
+  // 🚀 Iniciar partida (reemplaza la función actual)
+const startOfflineGame = () => {
+  const impostorCount = safePlayers.length >= 5 ? 2 : 1;
+  const result = startGame
+    ? startGame(impostorCount, category, subCategory)
+    : null;
 
-    // cerrar color picker si estaba abierto
-    setShowColors(false);
+  // cerrar color picker si estaba abierto
+  setShowColors(false);
+  console.log("OfflineSetup -> startGame result:", result);
 
-    // navegar a WordReveal con los datos
+  if (!result) {
+    // fallback: si startGame por alguna razón devolvió undefined
+    const fallbackWord = (defaultWords[category] && defaultWords[category][subCategory])
+      ? defaultWords[category][subCategory][Math.floor(Math.random() * defaultWords[category][subCategory].length)]
+      : "Palabra";
     navigation.navigate("WordReveal", {
-      word: result?.word,
+      word: fallbackWord,
       category,
-      subCategory
+      subCategory,
     });
-  };
+    return; 
+  }
+
+  // navegar a WordReveal pasando el resultado DEVUELTO por startGame (no confiar solo en re-calcular allá)
+  navigation.navigate("WordReveal", {
+    word: result.word,
+    category: result.category,
+    subCategory: result.subCategory,
+    impostorId: result.impostorId,
+    impostorIds: result.impostorIds,
+  });
+};
+
+
 
   return (
     <View style={styles.container}>

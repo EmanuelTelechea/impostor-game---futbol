@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  View,
 } from "react-native";
 import Animated, {
   useAnimatedStyle,
@@ -19,12 +20,14 @@ export default function WordRevealScreen({ navigation }) {
   const {
     players,
     word: contextWord,
+    hint,
     setWord,
     impostorId,
     startGame,
     categories,
     setCategory: setGlobalCategory,
-    getSubCategories,
+    getSubCategories, 
+    hintsEnabled,
   } = useContext(GameContext);
 
   const route = useRoute();
@@ -32,7 +35,6 @@ export default function WordRevealScreen({ navigation }) {
   const paramWord = params.word ?? null;
   const paramCategory = params.category ?? null;
   const paramSubCategory = params.subCategory ?? null;
-
   const [category, setCategory] = useState(paramCategory || null);
   const [subCategory, setSubCategory] = useState(paramSubCategory || null);
   const [index, setIndex] = useState(0);
@@ -54,21 +56,11 @@ export default function WordRevealScreen({ navigation }) {
   }));
 
   useEffect(() => {
-    if (paramCategory && paramSubCategory && players.length > 0) {
-      startGame(players.length >= 5 ? 2 : 1, paramCategory, paramSubCategory);
-    }
-  }, [paramCategory, paramSubCategory, players]);
-
-  useEffect(() => {
-    if (paramWord) {
-      if (typeof setWord === "function") setWord(paramWord);
-      return;
-    }
-
-    if (!paramWord && paramCategory && paramSubCategory && players.length > 0) {
-      startGame(players.length >= 5 ? 2 : 1, paramCategory, paramSubCategory);
-    }
-  }, [paramWord, paramCategory, paramSubCategory, players, setWord, startGame]);
+  // si no hay palabra aún, iniciamos el juego una vez
+  if (!contextWord && paramCategory && paramSubCategory && players.length > 0) {
+    startGame(players.length >= 5 ? 2 : 1, paramCategory, paramSubCategory);
+  }
+}, []);
 
   const toggleFlip = () => {
     const newValue = revealed ? 0 : 180;
@@ -140,6 +132,7 @@ export default function WordRevealScreen({ navigation }) {
   }
 
   const player = players[index];
+  const displayHint = hint ?? ""; 
   const displayWord = paramWord ?? contextWord ?? "Palabra no disponible";
   const cardColor = player.color || "#FFD93D";
 
@@ -152,26 +145,31 @@ export default function WordRevealScreen({ navigation }) {
 
       {/* Carta que se gira al presionar */}
       <TouchableOpacity
-        style={styles.cardContainer}
-        onPress={toggleFlip}
-        activeOpacity={0.9}
-      >
-        {/* Frente */}
-        <Animated.View style={[styles.card, { backgroundColor: cardColor }, frontStyle]}>
-          <Text style={styles.cardPlayer}>{player.name}</Text>
-          <Text style={styles.tapText}>Tocá para ver tu palabra 👀</Text>
-        </Animated.View>
+  style={styles.cardContainer}
+  onPress={toggleFlip}
+  activeOpacity={0.9}
+>
+  {/* Frente */}
+  <Animated.View style={[styles.card, { backgroundColor: cardColor }, frontStyle]}>
+    <Text style={styles.cardPlayer}>{player.name}</Text>
+    <Text style={styles.tapText}>Tocá para ver tu palabra 👀</Text>
+  </Animated.View>
 
-        {/* Reverso */}
-        <Animated.View style={[styles.card, { backgroundColor: cardColor }, backStyle]}>
-          <Text style={styles.cardBack}>
-            {String(player.id) === String(impostorId)
-              ? "IMPOSTOR 😈"
-              : displayWord}
-          </Text>
-        </Animated.View>
-      </TouchableOpacity>
+  {/* Reverso */}
+<Animated.View style={[styles.card, { backgroundColor: cardColor }, backStyle]}>
+  {String(player.id) === String(impostorId) ? (
+  <View style={styles.impostorContainer}>
+    <Text style={styles.cardBack}>IMPOSTOR 😈</Text>
+    {hintsEnabled  ? (
+      <Text style={styles.hintText}>Pista: {displayHint}</Text>
+    ) : null}
+  </View>
+) : (
+  <Text style={styles.cardBack}>{displayWord}</Text>
+)}
+</Animated.View>
 
+</TouchableOpacity>
       <TouchableOpacity
         style={[styles.button, { backgroundColor: "#FF595E" }]}
         onPress={next}
@@ -233,6 +231,20 @@ const styles = StyleSheet.create({
     fontFamily: "LuckiestGuy_400Regular",
     textAlign: "center",
   },
+  impostorContainer: {
+  alignItems: "center",
+  justifyContent: "center",
+},
+
+hintText: {
+  marginTop: 10,
+  fontSize: 18,
+  fontWeight: "bold",
+  color: "#ffffff",
+  textAlign: "center",
+  opacity: 0.9,
+},
+
   button: {
     backgroundColor: "#6C63FF",
     paddingVertical: 14,

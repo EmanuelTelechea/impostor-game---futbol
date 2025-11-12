@@ -13,27 +13,27 @@ export default function HomeScreen({ navigation }) {
 
       <View style={styles.menuContainer}>
         <TouchableOpacity
-          style={[styles.button, { backgroundColor: "#FFD93D" }]}
+          style={[styles.button, { backgroundColor: "#68ca2fff" }]}
           onPress={() => navigation.navigate("OfflineSetup")}
           activeOpacity={0.9}
         >
-          <Text style={styles.buttonText}>🎮 Jugar Offline</Text>
+          <Text style={styles.buttonText}>🎮 JUGAR OFFLINE</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.button, { backgroundColor: "#FF8C42" }]}
-          onPress={() => navigation.navigate("Rules")}
-          activeOpacity={0.9}
-        >
-          <Text style={styles.buttonText}>📜 Reglas</Text>
-        </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.button, { backgroundColor: "#FF8C42" }]}
+        onPress={() => navigation.navigate("Rules")}
+        activeOpacity={0.9}
+      >
+        <Text style={styles.buttonText}>📜 REGLAS</Text>
+      </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.button, { backgroundColor: "#6C63FF" }]}
           onPress={() => navigation.navigate("Settings")}
           activeOpacity={0.9}
         >
-          <Text style={styles.buttonText}>⚙️ Configuración</Text>
+          <Text style={styles.buttonText}>⚙️ CONFIGURACIÓN</Text>
         </TouchableOpacity>
 
       </View>

@@ -1,20 +1,16 @@
 import { LuckiestGuy_400Regular, useFonts } from "@expo-google-fonts/luckiest-guy";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
-import { useState } from "react";
-import { StyleSheet, Switch, Text, TouchableOpacity, View } from "react-native";
-
+import { Button, StyleSheet, Switch, Text, TouchableOpacity, View } from "react-native";
+import { useGameContext } from "../context/GameContext";
 export default function Settings({ navigation }) {
   const [fontsLoaded] = useFonts({ LuckiestGuy_400Regular });
-  const [impostors, setImpostors] = useState(1);
-  const [soundEnabled, setSoundEnabled] = useState(true);
+  const { soundEnabled, setSoundEnabled, impostorCount, setImpostorCount } = useGameContext();
 
-  const increaseImpostors = () => setImpostors(prev => (prev < 3 ? prev + 1 : prev));
-  const decreaseImpostors = () => setImpostors(prev => (prev > 1 ? prev - 1 : prev));
 
   const saveSettings = async () => {
     try {
-      await AsyncStorage.setItem("settings", JSON.stringify({ impostors, soundEnabled }));
+      await AsyncStorage.setItem("settings", JSON.stringify({ impostorCount, soundEnabled }));
       navigation.goBack();
     } catch (error) {
       console.error("Error al guardar configuración:", error);
@@ -29,20 +25,17 @@ export default function Settings({ navigation }) {
 
       <View style={styles.settingRow}>
         <Text style={styles.label}>Impostores:</Text>
-        <View style={styles.counterContainer}>
-          <TouchableOpacity style={styles.counterBtn} onPress={decreaseImpostors}>
-            <Text style={styles.counterText}>-</Text>
-          </TouchableOpacity>
-          <Text style={styles.value}>{impostors}</Text>
-          <TouchableOpacity style={styles.counterBtn} onPress={increaseImpostors}>
-            <Text style={styles.counterText}>+</Text>
-          </TouchableOpacity>
-        </View>
+        <Button title="➖" onPress={() => setImpostorCount(Math.max(1, impostorCount - 1))} />
+        <Text style={styles.value}>{impostorCount}</Text>
+        <Button title="➕" onPress={() => setImpostorCount(impostorCount + 1)} />
       </View>
 
       <View style={styles.settingRow}>
-        <Text style={styles.label}>Sonidos:</Text>
-        <Switch value={soundEnabled} onValueChange={setSoundEnabled} />
+       <Text style={styles.label}>Sonido 🔊 </Text>
+      <Switch
+        value={soundEnabled}
+        onValueChange={(value) => setSoundEnabled(value)}
+      />
       </View>
 
       <TouchableOpacity style={[styles.btn, { backgroundColor: "#6C63FF" }]} onPress={saveSettings}>

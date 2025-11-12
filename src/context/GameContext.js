@@ -1,217 +1,1073 @@
-// 🧠 context/GameContext.js
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createContext, useContext, useEffect, useState } from "react";
+
 export const GameContext = createContext({});
 
 export function GameProvider({ children }) {
   const [players, setPlayers] = useState([]);
   const [impostorId, setImpostorId] = useState(null);
   const [word, setWord] = useState("");
+  const [hint, setHint] = useState(""); // 💡 NUEVO: hint
   const [gameWinner, setGameWinner] = useState(null);
-  const [alivePlayers, setAlivePlayers] = useState([]); // ✅ nuevo estado
+  const [alivePlayers, setAlivePlayers] = useState([]);
   const [category, setCategory] = useState(null);
   const [subCategory, setSubCategory] = useState(null);
+  const [hintsEnabled, setHintsEnabled] = useState(true); // o false por defecto
 
-  // 🔄 Mantener vivos sincronizados con los jugadores (solo si está vacío o reiniciado)
+  // ⚙️ Configuración guardada
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [impostorCount, setImpostorCount] = useState(1);
+
   useEffect(() => {
-    if (Array.isArray(players) && players.length > 0) {
-      setAlivePlayers(players);
+  const loadSettings = async () => {
+    try {
+      const savedSound = await AsyncStorage.getItem("soundEnabled");
+      const savedImpostorCount = await AsyncStorage.getItem("impostorCount");
+      const savedHintsEnabled = await AsyncStorage.getItem("hintsEnabled");
+
+      if (savedSound !== null) setSoundEnabled(JSON.parse(savedSound));
+      if (savedImpostorCount !== null) setImpostorCount(Number(savedImpostorCount));
+      if (savedHintsEnabled !== null) setHintsEnabled(JSON.parse(savedHintsEnabled));
+    } catch (e) {
+      console.warn("⚠️ Error cargando configuraciones:", e);
+    }
+  };
+  loadSettings();
+}, []);
+
+useEffect(() => {
+  AsyncStorage.setItem("soundEnabled", JSON.stringify(soundEnabled));
+}, [soundEnabled]);
+
+useEffect(() => {
+  AsyncStorage.setItem("impostorCount", impostorCount.toString());
+}, [impostorCount]);
+
+useEffect(() => {
+  AsyncStorage.setItem("hintsEnabled", JSON.stringify(hintsEnabled));
+}, [hintsEnabled]);
+
+  // 📚 Palabras + pistas
+  const defaultWords = {
+    general: {
+    general: [
+      { word: "Perro", hint: "Ladra" },
+      { word: "Gato", hint: "Maulla" },
+      { word: "Mate", hint: "Bombilla" },
+      { word: "Café", hint: "Taza" },
+      { word: "Playa", hint: "Arena" },
+      { word: "Montaña", hint: "Altura" },
+      { word: "Pizza", hint: "Queso" },
+      { word: "Escuela", hint: "Clases" },
+      { word: "Avión", hint: "Vuela" },
+      { word: "Computadora", hint: "Pantalla" },
+      { word: "Hospital", hint: "Médico" },
+      { word: "Libro", hint: "Páginas" },
+      { word: "Reloj", hint: "Hora" },
+      { word: "Teléfono", hint: "Llamada" },
+      { word: "Cine", hint: "Película" },
+      { word: "Museo", hint: "Arte" },
+      { word: "Jardín", hint: "Flores" },
+      { word: "Supermercado", hint: "Carrito" },
+      { word: "Helado", hint: "Frío" },
+      { word: "Amigo", hint: "Confianza" },
+      { word: "Familia", hint: "Casa" },
+      { word: "Trabajo", hint: "Oficina" },
+      { word: "Fiesta", hint: "Baile" },
+      { word: "Chocolate", hint: "Dulce" },
+      { word: "Sombrero", hint: "Cabeza" },
+      { word: "Ventana", hint: "Vidrio" },
+      { word: "Camisa", hint: "Ropa" },
+      { word: "Auto", hint: "Ruedas" },
+      { word: "Moto", hint: "Casco" },
+      { word: "Bicicleta", hint: "Pedales" },
+      { word: "Lluvia", hint: "Paraguas" },
+      { word: "Sol", hint: "Calor" },
+      { word: "Nieve", hint: "Blanca" },
+      { word: "Ciudad", hint: "Tránsito" },
+      { word: "Campo", hint: "Tranquilo" },
+      { word: "Río", hint: "Agua" },
+      { word: "Bosque", hint: "Árboles" },
+      { word: "Casa", hint: "Techo" },
+      { word: "Hotel", hint: "Turista" },
+      { word: "Cama", hint: "Sueño" },
+      { word: "Radio", hint: "Sonido" },
+      { word: "Televisor", hint: "Canales" },
+      { word: "Comida", hint: "Plato" },
+      { word: "Puerta", hint: "Entrada" },
+      { word: "Zapato", hint: "Pie" },
+      { word: "Mesa", hint: "Comedor" },
+      { word: "Silla", hint: "Sentarse" },
+      { word: "Lámpara", hint: "Luz" },
+      { word: "Escalera", hint: "Peldaños" },
+      { word: "Puente", hint: "Cruzar" },
+      { word: "Carpeta", hint: "Papel" },
+      { word: "Asado", hint: "Parrilla" },
+      { word: "Parrilla", hint: "Carbón" },
+      { word: "Ferné", hint: "Coca" },
+      { word: "Termo", hint: "Agua" },
+      { word: "Bombilla", hint: "Metal" },
+      { word: "Ñeri", hint: "Amigo" },
+      { word: "Che", hint: "Expresión" },
+      { word: "Boliche", hint: "Noche" },
+      { word: "Colectivo", hint: "Parada" },
+      { word: "Camioneta", hint: "Rural" },
+      { word: "Barrio", hint: "Vecino" },
+      { word: "Panchería", hint: "Mostaza" },
+      { word: "Fiambrería", hint: "Jamón" },
+      { word: "Kiosco", hint: "Golosina" },
+      { word: "Mate dulce", hint: "Azúcar" },
+      { word: "Yerba", hint: "Verde" },
+      { word: "Refresco", hint: "Burbuja" },
+      { word: "Pancho", hint: "Salchicha" },
+      { word: "Empanada", hint: "Relleno" },
+      { word: "Milanga", hint: "Napolitana" },
+    ],
+  },
+
+    futbol: {
+      general: [
+        { word: "Pelota", hint: "Redonda" },
+        { word: "Árbitro", hint: "Silbato" },
+        { word: "Arco", hint: "Red" },
+        { word: "Cancha", hint: "Pasto" },
+        { word: "Offside", hint: "Adelantado" },
+        { word: "Penal", hint: "Punto" },
+        { word: "Hincha", hint: "Pasión" },
+        { word: "Campeón", hint: "Trofeo" },
+        { word: "Tiro libre", hint: "Falta" },
+        { word: "Corner", hint: "Esquina" },
+        { word: "Gol", hint: "Grito" },
+        { word: "Expulsión", hint: "Roja" },
+        { word: "VAR", hint: "Pantalla" },
+        { word: "Final", hint: "Última" },
+        { word: "Mundial", hint: "Selecciones" },
+        { word: "Camiseta", hint: "Colores" },
+        { word: "Botines", hint: "Pies" },
+        { word: "Entrenador", hint: "Estrategia" },
+        { word: "Capitán", hint: "Brazalete" },
+        { word: "Cambio", hint: "Sustitución" },
+        { word: "Lesión", hint: "Dolor" },
+        { word: "Tribuna", hint: "Gente" },
+        { word: "Clásico", hint: "Rivalidad" },
+        { word: "Derrota", hint: "Tristeza" },
+        { word: "Victoria", hint: "Festejo" },
+        { word: "Empate", hint: "Igualdad" },
+        { word: "Táctica", hint: "Plan" },
+        { word: "Defensa", hint: "Bloqueo" },
+        { word: "Ataque", hint: "Ofensiva" },
+        { word: "Medio campo", hint: "Transición" },
+        { word: "Bombonera", hint: "Boca" },
+        { word: "Monumental", hint: "River" },
+        { word: "Centenario", hint: "Montevideo" },
+        { word: "Campeón del Siglo", hint: "Peñarol" },
+        { word: "Celeste", hint: "Uruguay" },
+        { word: "Albiceleste", hint: "Argentina" },
+        { word: "Charrúa", hint: "Garra" },
+        { word: "Barras", hint: "Hinchas" },
+        { word: "Hinchas", hint: "Cantos" },
+        { word: "Mate en la cancha", hint: "Termo" },
+        { word: "Picado", hint: "Amigos" },
+        { word: "Fútbol 5", hint: "Reducción" },
+        { word: "Cancha de barrio", hint: "Polvo" },
+        { word: "Clásico del Río de la Plata", hint: "Histórico" },
+        { word: "Final del mundo", hint: "Épico" },
+        { word: "Selección", hint: "País" },
+        { word: "DT", hint: "Táctico" },
+        { word: "Golero", hint: "Atajada" },
+        { word: "Patadura", hint: "Torpe" },
+        { word: "Pelotazo", hint: "Fuerte" },
+      ],
+      jugadores: [
+        { word: "Maradona", hint: "DIOS" },
+        { word: "Pelé", hint: "Rey" },
+        { word: "Zidane", hint: "Francia" },
+        { word: "Ronaldinho", hint: "Sonrisa" },
+        { word: "Ronaldo Nazário", hint: "Fenómeno" },
+        { word: "Henry", hint: "Arsenal" },
+        { word: "Beckham", hint: "Moda" },
+        { word: "Baresi", hint: "Milan" },
+        { word: "Cannavaro", hint: "Capitán" },
+        { word: "Buffon", hint: "Arquero" },
+        { word: "Iniesta", hint: "Final" },
+        { word: "Xavi", hint: "Cerebro" },
+        { word: "Pirlo", hint: "Elegancia" },
+        { word: "Totti", hint: "Roma" },
+        { word: "Del Piero", hint: "Juventus" },
+        { word: "Raúl", hint: "Madrid" },
+        { word: "Casillas", hint: "Portero" },
+        { word: "Kaká", hint: "Fe" },
+        { word: "Shevchenko", hint: "Ucrania" },
+        { word: "Maldini", hint: "Leyenda" },
+        { word: "Batistuta", hint: "Goles" },
+        { word: "Riquelme", hint: "Enganche" },
+        { word: "Crespo", hint: "Delantero" },
+        { word: "Aimar", hint: "Magia" },
+        { word: "Simeone", hint: "DT" },
+        { word: "Tevez", hint: "Apache" },
+        { word: "Gallardo", hint: "Muñeco" },
+        { word: "Verón", hint: "Brujita" },
+        { word: "Francescoli", hint: "Príncipe" },
+        { word: "Forlán", hint: "Rubio" },
+        { word: "Recoba", hint: "Zurda" },
+        { word: "Rubén Sosa", hint: "Tiro" },
+        { word: "Obdulio Varela", hint: "Maracanazo" },
+        { word: "Ghiggia", hint: "Gol" },
+        { word: "Luis Cubilla", hint: "Wanderers" },
+        { word: "Enzo Francescoli", hint: "River" },
+        { word: "El Loco Abreu", hint: "Panenka" },
+        { word: "Higuita", hint: "Escorpión" },
+        { word: "Valderrama", hint: "Pelo" },
+        { word: "Puyol", hint: "Capitán" },
+        { word: "Roberto Carlos", hint: "Tiro" },
+        { word: "Cafu", hint: "Brasil" },
+        { word: "Van Nistelrooy", hint: "Goleador" },
+        { word: "Lampard", hint: "Chelsea" },
+        { word: "Gerrard", hint: "Liverpool" },
+        { word: "Scholes", hint: "Rojo" },
+        { word: "Cantona", hint: "Rebelde" },
+        { word: "Vieira", hint: "Arsenal" },
+        { word: "Zamorano", hint: "Chile" },
+        { word: "Stoichkov", hint: "Bulgaria" },
+        { word: "Messi", hint: "GOAT" },
+        { word: "Cristiano Ronaldo", hint: "Siuu" },
+        { word: "Neymar", hint: "Brasil" },
+        { word: "Mbappé", hint: "Velocidad" },
+        { word: "Haaland", hint: "Robot" },
+        { word: "Vinicius Jr", hint: "Baile" },
+        { word: "Rodrygo", hint: "Joven" },
+        { word: "Bellingham", hint: "Joyita" },
+        { word: "Valverde", hint: "Pajarito" },
+        { word: "Enzo Fernández", hint: "Chelsea" },
+        { word: "Julián Álvarez", hint: "Araña" },
+        { word: "Lautaro Martínez", hint: "Toro" },
+        { word: "Di María", hint: "Fideo" },
+        { word: "De Paul", hint: "Motor" },
+        { word: "Otamendi", hint: "Duro" },
+        { word: "Romero", hint: "Cuti" },
+        { word: "Martínez", hint: "Dibu" },
+        { word: "Paredes", hint: "Pase" },
+        { word: "Garnacho", hint: "Joven" },
+        { word: "Dybala", hint: "Joya" },
+        { word: "Suárez", hint: "Pistolero" },
+        { word: "Cavani", hint: "Matador" },
+        { word: "Núñez", hint: "Liverpool" },
+        { word: "Araujo", hint: "Defensa" },
+        { word: "De La Cruz", hint: "River" },
+        { word: "Bentancur", hint: "Tottenham" },
+        { word: "Ugarte", hint: "PSG" },
+        { word: "Torres", hint: "Orlando" },
+        { word: "Vecino", hint: "Inter" },
+        { word: "Giménez", hint: "Atlético" },
+        { word: "Modric", hint: "Croacia" },
+        { word: "Kroos", hint: "Alemán" },
+        { word: "Rodri", hint: "City" },
+        { word: "Pedri", hint: "Barça" },
+        { word: "Gavi", hint: "Juvenil" },
+        { word: "Lewandowski", hint: "Polonia" },
+        { word: "Kane", hint: "Tottenham" },
+        { word: "Saka", hint: "Arsenal" },
+        { word: "Foden", hint: "Inglés" },
+        { word: "Barella", hint: "Inter" },
+        { word: "Osimhen", hint: "Napoli" },
+        { word: "Giroud", hint: "Francia" },
+        { word: "Griezmann", hint: "Peinado" },
+        { word: "Upamecano", hint: "Defensa" },
+        { word: "Koundé", hint: "Barcelona" },
+        { word: "Hakimi", hint: "Marruecos" },
+        { word: "Onana", hint: "Arquero" },
+        { word: "Rashford", hint: "United" },
+        { word: "Bruno Fernandes", hint: "Portugal" },
+        { word: "Rice", hint: "Arsenal" },
+        { word: "Musiala", hint: "Alemania" },
+        { word: "Coman", hint: "Bayern" },
+        { word: "Chiesa", hint: "Juventus" },
+        { word: "Son Heung-min", hint: "Corea" },
+        { word: "Trossard", hint: "Bélgica" },
+        { word: "Martín Cáceres", hint: "Veterano" },
+        { word: "Brian Rodríguez", hint: "Extremo" },
+        { word: "Maxi Araújo", hint: "Toluca" },
+        { word: "Facundo Torres", hint: "Orlando" },
+        { word: "Viña", hint: "Flamengo" },
+      ],
+      equipos: [
+        { word: "Boca Juniors", hint: "Oro" },
+        { word: "River Plate", hint: "Millonario" },
+        { word: "Peñarol", hint: "Abeja" },
+        { word: "Nacional", hint: "Tricolor" },
+        { word: "Defensor Sporting", hint: "Violeta" },
+        { word: "Danubio", hint: "Universidad" },
+        { word: "Liverpool (URU)", hint: "Cuchilla" },
+        { word: "Racing Club", hint: "Academia" },
+        { word: "Independiente", hint: "Rojo" },
+        { word: "San Lorenzo", hint: "Ciclón" },
+        { word: "Estudiantes", hint: "Pincha" },
+        { word: "Newell's", hint: "Lepra" },
+        { word: "Rosario Central", hint: "Canalla" },
+        { word: "Colón", hint: "Palmeras" },
+        { word: "Gimnasia", hint: "Lobo" },
+        { word: "Lanús", hint: "Granate" },
+        { word: "Talleres", hint: "Matador" },
+        { word: "Vélez", hint: "Italia" },
+        { word: "Argentinos Juniors", hint: "Semillero" },
+        { word: "Racing (URU)", hint: "Escuela" },
+        { word: "Real Madrid", hint: "Galáctico" },
+        { word: "Barcelona", hint: "Mediatico" },
+        { word: "PSG", hint: "Jeque" },
+        { word: "Manchester City", hint: "Cielo" },
+        { word: "Juventus", hint: "Bianconeri" },
+        { word: "Bayern Múnich", hint: "Bávaro" },
+        { word: "Inter", hint: "Nerazzurri" },
+        { word: "Napoli", hint: "Partenopei" },
+        { word: "Flamengo", hint: "Mengao" },
+        { word: "Palmeiras", hint: "Verdão" },
+        { word: "Benfica", hint: "Águilas" },
+        { word: "Chelsea", hint: "Blues" },
+        { word: "Arsenal", hint: "Cañon" },
+        { word: "Liverpool", hint: "Resbalon" },
+        { word: "Atlético de Madrid", hint: "Colchonero" },
+        { word: "Borussia Dortmund", hint: "Amarillo" },
+        { word: "Ajax", hint: "Mitologia" },
+        { word: "Porto", hint: "Dragones" },
+        { word: "AC Milan", hint: "Rossoneri" },
+        { word: "Roma", hint: "Loba" },
+      ],
+    },
+    cine: {
+      general: [
+        { word: "Actor", hint: "Interpretación" },
+        { word: "Cámara", hint: "Grabación" },
+        { word: "Palomitas", hint: "Snack" },
+        { word: "Acción", hint: "Escena" },
+        { word: "Director", hint: "Ordena" },
+        { word: "Drama", hint: "Emoción" },
+        { word: "Comedia", hint: "Risa" },
+        { word: "Terror", hint: "Miedo" },
+        { word: "Oscar", hint: "Premio" },
+        { word: "Escena", hint: "Rodaje" },
+        { word: "Guión", hint: "Texto" },
+        { word: "Rodaje", hint: "Filmación" },
+        { word: "Tráiler", hint: "Adelanto" },
+        { word: "Cineasta", hint: "Director" },
+        { word: "Pantalla", hint: "Proyección" },
+        { word: "Butaca", hint: "Asiento" },
+        { word: "Proyector", hint: "Luz" },
+        { word: "Crítica", hint: "Opinión" },
+        { word: "Vestuario", hint: "Ropa" },
+        { word: "Maquillaje", hint: "Rostro" },
+        { word: "Efectos especiales", hint: "Visuales" },
+        { word: "Sonido", hint: "Audio" },
+        { word: "Clímax", hint: "Tensión" },
+        { word: "Secuela", hint: "Continuación" },
+        { word: "Película", hint: "Film" },
+        { word: "Serie", hint: "Episodios" },
+        { word: "Documental", hint: "Realidad" },
+        { word: "Netflix", hint: "Streaming" },
+        { word: "Estreno", hint: "Nuevo" },
+        { word: "Spoiler", hint: "Revelación" },
+        { word: "Popcorn", hint: "Maíz" },
+        { word: "Cinépolis", hint: "Cine" },
+        { word: "Sala", hint: "Proyección" },
+        { word: "Protagonista", hint: "Principal" },
+        { word: "Cortometraje", hint: "Breve" },
+      ],
+      peliculas: [
+        { word: "Inception", hint: "Sueños" },
+        { word: "Titanic", hint: "Iceberg" },
+        { word: "Avatar", hint: "Pandora" },
+        { word: "Gladiador", hint: "Arena" },
+        { word: "Matrix", hint: "Realidad" },
+        { word: "Joker", hint: "Payaso" },
+        { word: "Forrest Gump", hint: "Corredor" },
+        { word: "Interstellar", hint: "Espacio" },
+        { word: "El Padrino", hint: "Mafia" },
+        { word: "La La Land", hint: "Música" },
+        { word: "Avatar", hint: "James Cameron" },
+        { word: "Jurassic Park", hint: "Dinosaurios" },
+        { word: "El Señor de los Anillos", hint: "Anillo" },
+        { word: "Harry Potter", hint: "Magia" },
+        { word: "Piratas del Caribe", hint: "Barco" },
+        { word: "Star Wars", hint: "Galaxia" },
+        { word: "El Resplandor", hint: "Hotel" },
+        { word: "Toy Story", hint: "Juguetes" },
+        { word: "Coco", hint: "Día de los Muertos" },
+        { word: "Up", hint: "Globos" },
+        { word: "Frozen", hint: "Hielo" },
+        { word: "El Rey León", hint: "Simba" },
+        { word: "Buscando a Nemo", hint: "Pez" },
+        { word: "Los Vengadores", hint: "Superhéroes" },
+        { word: "Deadpool", hint: "Chistes" },
+        { word: "Black Panther", hint: "Wakanda" },
+        { word: "Doctor Strange", hint: "Hechicero" },
+        ],
+        actores: [
+          { word: "Leonardo DiCaprio", hint: "Titanic" },
+          { word: "Brad Pitt", hint: "Fight Club" }, 
+          { word: "Meryl Streep", hint: "Actriz" },
+          { word: "Tom Hanks", hint: "Forrest Gump" },
+          { word: "Scarlett Johansson", hint: "Black Widow" },
+          { word: "Robert Downey Jr.", hint: "Iron Man" },
+          { word: "Natalie Portman", hint: "Black Swan" },
+          { word: "Johnny Depp", hint: "Piratas del Caribe" },
+          { word: "Angelina Jolie", hint: "Tomb Raider" },
+          { word: "Denzel Washington", hint: "Training Day" },
+          { word: "Jennifer Lawrence", hint: "Hunger Games" },
+          { word: "Morgan Freeman", hint: "Narrador" },
+          { word: "Emma Stone", hint: "La La Land" },
+          { word: "Christian Bale", hint: "Batman" },
+          { word: "Anne Hathaway", hint: "Les Misérables" },
+          { word: "Will Smith", hint: "Men in Black" },
+          { word: "Gal Gadot", hint: "Wonder Woman" },
+          { word: "Hugh Jackman", hint: "Wolverine" },
+          { word: "Kate Winslet", hint: "Titanic" },
+          { word: "Chris Hemsworth", hint: "Thor" },
+        ],
+    },
+    videojuegos: {
+      general: [
+        { word: "Control", hint: "Mando" },
+        { word: "Nivel", hint: "Etapa" },
+        { word: "Puntos", hint: "Score" },
+        { word: "Enemigo", hint: "Rival" },
+        { word: "Personaje", hint: "Avatar" },
+        { word: "Misión", hint: "Objetivo" },
+        { word: "Arma", hint: "Fuego" },
+        { word: "Salto", hint: "Brinco" },
+        { word: "Vida", hint: "Corazón" },
+        { word: "Juego", hint: "Diversión" },
+        { word: "Pantalla", hint: "Monitor" },
+        { word: "Joystick", hint: "Palanca" },
+        { word: "Estrategia", hint: "Plan" },
+        { word: "Multijugador", hint: "Varios" },
+        { word: "Aventura", hint: "Exploración" },
+        { word: "Gráficos", hint: "Visuales" },
+        { word: "Sonido", hint: "Audio" },
+        { word: "Descarga", hint: "Internet" },
+        { word: "Consola", hint: "Plataforma" },
+        { word: "PlayStation", hint: "Sony" },
+        { word: "Xbox", hint: "Microsoft" },
+        { word: "Nintendo", hint: "Switch" },
+        { word: "Mario", hint: "Fontanero" },
+        { word: "Zelda", hint: "Hyrule" },
+        { word: "Minecraft", hint: "Bloques" },
+        { word: "FIFA", hint: "Fútbol" },
+        { word: "GTA", hint: "Crimen" },
+        { word: "Counter Strike", hint: "Disparos" },
+        { word: "Valorant", hint: "Agentes" },
+        { word: "Fortnite", hint: "Construcción" },
+        { word: "Call of Duty", hint: "Guerra" },
+        { word: "Among Us", hint: "Impostor" },
+        { word: "The Sims", hint: "Vida" },
+        { word: "LOL", hint: "MOBA" },
+        { word: "PUBG", hint: "Battle" },
+        { word: "Rocket League", hint: "Autos" },
+        { word: "Pokémon", hint: "Criaturas" },
+        { word: "Tetris", hint: "Piezas" },
+        { word: "Sonic", hint: "Velocidad" },
+        { word: "Pac-Man", hint: "Laberinto" },
+        { word: "Guitar Hero", hint: "Música" },
+        { word: "Crash Bandicoot", hint: "Marsupial" },
+        { word: "Red Dead", hint: "Oeste" },
+        { word: "Roblox", hint: "Mundos" },
+        { word: "Fall Guys", hint: "Caídas" },
+        { word: "Free Fire", hint: "Supervivencia" },
+        { word: "Skyrim", hint: "Dragones" },
+        { word: "Halo", hint: "Jefe" },
+        { word: "Overwatch", hint: "Héroes" },
+      ],
+    },
+    musica: {
+      general: [
+      { word: "Guitarra", hint: "Cuerdas" },
+      { word: "Batería", hint: "Percusión" },
+      { word: "Micrófono", hint: "Voz" },
+      { word: "Concierto", hint: "Escenario" },
+      { word: "Rock", hint: "Eléctrico" },
+      { word: "Pop", hint: "Comercial" },
+      { word: "Reggaetón", hint: "Urbano" },
+      { word: "Nota", hint: "Tono" },
+      { word: "DJ", hint: "Mezcla" },
+      { word: "Melodía", hint: "Armonía" },
+      { word: "Ritmo", hint: "Compás" },
+      { word: "Disco", hint: "Vinilo" },
+      { word: "Grabación", hint: "Estudio" },
+      { word: "Escenario", hint: "Luces" },
+      { word: "Auriculares", hint: "Escucha" },
+      { word: "Altavoz", hint: "Sonido" },
+      { word: "Festival", hint: "Multitud" },
+      { word: "Baile", hint: "Movimiento" },
+      { word: "Letra", hint: "Canción" },
+      { word: "Coro", hint: "Voces" },
+      { word: "Instrumento", hint: "Música" },
+      { word: "Piano", hint: "Teclas" },
+      { word: "Violín", hint: "Arco" },
+      { word: "Bajo", hint: "Graves" },
+      { word: "Ensayo", hint: "Preparación" },
+      { word: "Cumbia", hint: "Latina" },
+      { word: "Murga", hint: "Carnaval" },
+      { word: "Tambor", hint: "Golpe" },
+      { word: "Milonga", hint: "Tango" },
+      { word: "Folklore", hint: "Tradición" },
+      ],
+      cantantes: [
+        { word: "Abel Pintos", hint: "Balada" },
+        { word: "Soledad", hint: "Folklore" },
+        { word: "Chano", hint: "Pop" },
+        { word: "Wos", hint: "Freestyle" },
+        { word: "Nicki Nicole", hint: "Trap" },
+        { word: "Bizarrap", hint: "Productor" },
+        { word: "Trueno", hint: "Rap" },
+        { word: "Duki", hint: "Trap" },
+        { word: "Maria Becerra", hint: "Pop" },
+        { word: "Tini", hint: "Disney" },
+        { word: "Callejeros", hint: "Rock" },
+        { word: "No Te Va Gustar", hint: "Uruguay" },
+        { word: "La Vela Puerca", hint: "Murga" },
+        { word: "El Cuarteto de Nos", hint: "Ironía" },
+        { word: "Lucas Sugo", hint: "Romántico" },
+        { word: "Jaime Roos", hint: "Montevideo" },
+        { word: "Rombai", hint: "Cumbia" },
+        { word: "Marama", hint: "Fiesta" },
+        { word: "Los Auténticos Decadentes", hint: "Fiesta" },
+        { word: "Los Fabulosos Cadillacs", hint: "Ska" },
+        { word: "Soda Stereo", hint: "Leyenda" },
+        { word: "Gustavo Cerati", hint: "Ídolo" },
+        { word: "Ciro", hint: "Piojos" },
+        { word: "Andrés Calamaro", hint: "Rock" },
+        { word: "Fito Páez", hint: "Rosario" },
+        { word: "La Renga", hint: "Guitarra" },
+        { word: "Patricio Rey", hint: "Redondos" },
+        { word: "Tan Biónica", hint: "Ciudad" },
+        { word: "Bersuit", hint: "Vergarabat" },
+        { word: "Axel", hint: "Romance" },
+        { word: "Taylor Swift", hint: "Pop" },
+        { word: "Bad Bunny", hint: "Reggaetón" },
+        { word: "Queen", hint: "Freddie" },
+        { word: "The Beatles", hint: "Liverpool" },
+        { word: "Shakira", hint: "Colombia" },
+        { word: "Maluma", hint: "Medellín" },
+        { word: "Dua Lipa", hint: "Británica" },
+        { word: "Ozuna", hint: "Puerto Rico" },
+        { word: "Adele", hint: "Voz" },
+        { word: "Bruno Mars", hint: "Show" },
+        { word: "Billie Eilish", hint: "Oscura" },
+        { word: "Ed Sheeran", hint: "Guitarra" },
+        { word: "Rauw Alejandro", hint: "Dance" },
+        { word: "Karol G", hint: "Bichota" },
+        { word: "Beyoncé", hint: "Queen" },
+        { word: "Michael Jackson", hint: "Rey" },
+        { word: "The Weeknd", hint: "Oscuridad" },
+        { word: "Coldplay", hint: "Color" },
+        { word: "Rosalía", hint: "Motomami" },
+        { word: "Justin Bieber", hint: "Canadá" },
+        { word: "Harry Styles", hint: "Moda" },
+        { word: "Nirvana", hint: "Grunge" },
+        { word: "Selena Gomez", hint: "Disney" },
+        { word: "Post Malone", hint: "Tatuajes" },
+        { word: "Drake", hint: "Toronto" },
+        { word: "Luis Fonsi", hint: "Despacito" },
+        { word: "Daddy Yankee", hint: "Gasolina" },
+        { word: "Jennifer Lopez", hint: "Diva" },
+        { word: "Camila Cabello", hint: "Havana" },
+        { word: "Imagine Dragons", hint: "Radioactive" },
+        { word: "Eminem", hint: "Rap" },
+        { word: "Katy Perry", hint: "California" },
+      ],
+      canciones: [
+        { word: "La Cumbia de los Trapos", hint: "Barrio" },
+        { word: "De Música Ligera", hint: "Soda" },
+        { word: "En el Balcón", hint: "Chano" },
+        { word: "Ciudad Mágica", hint: "TanBiónica" },
+        { word: "Me Hace Bien", hint: "Axel" },
+        { word: "Brindis", hint: "Soledad" },
+        { word: "Todo Cambia", hint: "Mercedes" },
+        { word: "Arrancármelo", hint: "Wos" },
+        { word: "Ella Baila Sola", hint: "Éxito" },
+        { word: "Loco", hint: "Calamaro" },
+        { word: "Y Sin Embargo", hint: "Sabina" },
+        { word: "Don", hint: "Miranda" },
+        { word: "Crimen", hint: "Cerati" },
+        { word: "Color Esperanza", hint: "Optimismo" },
+        { word: "Mi Princesa", hint: "Axel" },
+        { word: "La Noche", hint: "Sugo" },
+        { word: "Cielito Lindo", hint: "México" },
+        { word: "Cuando Pase el Temblor", hint: "Soda" },
+        { word: "Persiana Americana", hint: "Clásico" },
+        { word: "Madura", hint: "Rombai" },
+        { word: "Bipolar", hint: "Marama" },
+        { word: "Universo Paralelo", hint: "Roos" },
+        { word: "Bohemian Rhapsody", hint: "Queen" },
+        { word: "Despacito", hint: "Fonsi" },
+        { word: "Smells Like Teen Spirit", hint: "Nirvana" },
+        { word: "Thriller", hint: "Jackson" },
+        { word: "Hey Jude", hint: "Beatles" },
+        { word: "Havana", hint: "Camila" },
+        { word: "Blinding Lights", hint: "Weeknd" },
+        { word: "As It Was", hint: "Harry" },
+        { word: "Shape of You", hint: "Sheeran" },
+        { word: "Uptown Funk", hint: "Bruno" },
+        { word: "Someone Like You", hint: "Adele" },
+        { word: "Levitating", hint: "Dua" },
+        { word: "Flowers", hint: "Miley" },
+        { word: "Dance Monkey", hint: "Tones" },
+        { word: "Tusa", hint: "Karol" },
+        { word: "La Canción", hint: "BadBunny" },
+        { word: "Rolling in the Deep", hint: "Adele" },
+        { word: "Bad Guy", hint: "Billie" },
+        { word: "Perfect", hint: "Ed" },
+        { word: "Viva la Vida", hint: "Coldplay" },
+        { word: "Peaches", hint: "Bieber" },
+        { word: "Señorita", hint: "Camila" },
+        { word: "Calma", hint: "Pedro" },
+        { word: "Tití Me Preguntó", hint: "Bunny" },
+        { word: "Stay", hint: "Kid" },
+        { word: "Shallow", hint: "Gaga" },
+        { word: "Rockstar", hint: "Post" },
+        { word: "Dákiti", hint: "Rauw" },
+        { word: "Montero", hint: "LilNas" },
+        { word: "Umbrella", hint: "Rihanna" },
+      ],
+    },
+    comida: {
+      general: [
+        { word: "Pizza", hint: "Italiana" },
+        { word: "Hamburguesa", hint: "Fast food" },
+        { word: "Papas fritas", hint: "Papas" },
+        { word: "Helado", hint: "Dulce" },
+        { word: "Empanada", hint: "Relleno" },
+        { word: "Asado", hint: "Carne" },
+        { word: "Milanesa", hint: "Rebozada" },
+        { word: "Chivito", hint: "Uruguaya" },
+        { word: "Pancho", hint: "Hot dog" },
+        { word: "Tarta", hint: "Horneada" },
+        { word: "Pastel", hint: "Dulce" },
+        { word: "Tortilla", hint: "Huevos" },
+        { word: "Fainá", hint: "Garbanzos" },
+        { word: "Choripán", hint: "Chorizo" },
+        { word: "Panchito", hint: "Pequeño" },
+        { word: "Lasaña", hint: "Capas" },
+        { word: "Ñoquis", hint: "Pasta" },
+        { word: "Ravioles", hint: "Rellenos" },
+        { word: "Parrilla", hint: "Asado" },
+        { word: "Dulce de leche", hint: "Postre" },
+        { word: "Ceviche", hint: "Perú" },
+        { word: "Sushi", hint: "Japón" },
+        { word: "Tacos", hint: "México" },
+        { word: "Paella", hint: "España" },
+        { word: "Curry", hint: "India" },
+        { word: "Goulash", hint: "Hungría" },
+        { word: "Moussaka", hint: "Grecia" },
+      ],    
+    },
+    paises: {
+        general: [
+        { word: "Uruguay", hint: "Mate" },
+        { word: "Argentina", hint: "Asado" },
+        { word: "Brasil", hint: "Samba" },
+        { word: "Chile", hint: "Andes" },
+        { word: "Paraguay", hint: "Ñandutí" },
+        { word: "Bolivia", hint: "Altiplano" },
+        { word: "Perú", hint: "Machu Picchu" },
+        { word: "Ecuador", hint: "Galápagos" },
+        { word: "Colombia", hint: "Café" },
+        { word: "Venezuela", hint: "Arepa" },
+        { word: "México", hint: "Tacos" },
+        { word: "España", hint: "Paella" },
+        { word: "Italia", hint: "Pizza" },
+        { word: "Francia", hint: "Torre" },
+        { word: "Alemania", hint: "Oktoberfest" },
+        { word: "Portugal", hint: "Lisboa" },
+        { word: "Japón", hint: "Sushi" },
+        { word: "China", hint: "Gran Muralla" },
+        { word: "Rusia", hint: "Moscú" },
+        { word: "Canadá", hint: "Maple" },
+        { word: "Australia", hint: "Canguro" },
+        { word: "Suiza", hint: "Reloj" },
+        { word: "Grecia", hint: "Acrópolis" },
+        { word: "Irlanda", hint: "Leprechaun" },
+        { word: "Holanda", hint: "Tulipanes" },
+        { word: "Suecia", hint: "Vikingos" },
+        { word: "Corea del Sur", hint: "Seúl" },
+        { word: "Sudáfrica", hint: "Safari" },
+        { word: "Egipto", hint: "Pirámides" },
+      ],
+    },
+  marcas: {
+      general: [
+        { word: "Nike", hint: "Just Do It" },
+        { word: "Adidas", hint: "Tres Rayas" },
+        { word: "Apple", hint: "Manzana" },
+        { word: "Samsung", hint: "Electrónica" },
+        { word: "Coca-Cola", hint: "Refresco" },
+        { word: "Pepsi", hint: "Competencia" },
+        { word: "McDonald's", hint: "Arcos Dorados" },
+        { word: "Starbucks", hint: "Café" },
+        { word: "Toyota", hint: "Autos" },
+        { word: "Honda", hint: "Motocicletas" },
+        { word: "Ford", hint: "Mustang" },
+        { word: "Chevrolet", hint: "Camaro" },
+        { word: "Louis Vuitton", hint: "Lujo" },
+        { word: "Gucci", hint: "Moda" },
+        { word: "Zara", hint: "Ropa" },
+        { word: "H&M", hint: "Moda Rápida" },
+      ],    
+    },
+    autos: {
+      general: [
+        { word: "Volante", hint: "Conducir" },
+        { word: "Motor", hint: "Potencia" },
+        { word: "Neumáticos", hint: "Llantas" },
+        { word: "Freno", hint: "Detener" },
+        { word: "Acelerador", hint: "Velocidad" },
+        { word: "Cambio", hint: "Marcha" },
+        { word: "Luces", hint: "Faros" },
+        { word: "Parabrisas", hint: "Vidrio" },
+        { word: "Asiento", hint: "Confort" },
+        { word: "Maletero", hint: "Equipaje" },
+        { word: "Escape", hint: "Ruido" },
+        { word: "Capó", hint: "Motor" },
+        { word: "Retrovisor", hint: "Visión" },
+        { word: "Batería", hint: "Energía" },
+        { word: "Combustible", hint: "Gasolina" },
+        { word: "Tren de aterrizaje", hint: "Ruedas" },
+      ],    
+    },
+    astronomia: {
+      general: [
+        { word: "Estrella", hint: "Brilla" }, 
+        { word: "Planeta", hint: "Órbita" },
+        { word: "Galaxia", hint: "Vía Láctea" },
+        { word: "Cometa", hint: "Cola" },
+        { word: "Asteroide", hint: "Roca" },
+        { word: "Nebulosa", hint: "Nube" },
+        { word: "Agujero negro", hint: "Gravedad" },
+        { word: "Constelación", hint: "Estrellas" },
+        { word: "Satélite", hint: "Órbita" },
+        { word: "Meteorito", hint: "Impacto" },
+        { word: "Cráter", hint: "Impacto" },
+        { word: "Luna", hint: "Satelite" },
+        { word: "Sol", hint: "Estrella" },
+        { word: "Vía Láctea", hint: "Galaxia" },
+        { word: "Órbita", hint: "Trayectoria" },
+        { word: "Telescopio", hint: "Observación" },
+      ],
+    },
+    moda: {
+      general: [
+        { word: "Vestido", hint: "Ropa" },
+        { word: "Zapatos", hint: "Calzado" },
+        { word: "Sombrero", hint: "Cabeza" },
+        { word: "Bolso", hint: "Accesorio" },
+        { word: "Camisa", hint: "Parte superior" },
+        { word: "Pantalones", hint: "Inferior" },
+        { word: "Falda", hint: "Ropa" },
+        { word: "Chaqueta", hint: "Abrigo" },
+        { word: "Bufanda", hint: "Cuello" },
+        { word: "Guantes", hint: "Manos" },
+        { word: "Cinturón", hint: "Sujeción" },
+        { word: "Reloj", hint: "Tiempo" },
+        { word: "Gafas de sol", hint: "Ojos" },
+        { word: "Traje", hint: "Formal" },
+        { word: "Corbata", hint: "Cuello" },
+        { word: "Calcetines", hint: "Pies" },
+      ],
+    },
+    arte: {
+      general: [
+        { word: "Pintura", hint: "Lienzo" },
+        { word: "Escultura", hint: "3D" },
+        { word: "Dibujo", hint: "Lápiz" },
+        { word: "Galería", hint: "Exposición" },
+        { word: "Museo", hint: "Arte" },
+        { word: "Artista", hint: "Creador" },
+        { word: "Cuadro", hint: "Imagen" },
+        { word: "Brocha", hint: "Pincel" },
+        { word: "Lápiz", hint: "Dibujo" },
+        { word: "Carboncillo", hint: "Dibujo" },
+        { word: "Acuarela", hint: "Pintura" },
+        { word: "Óleo", hint: "Pintura" },
+        { word: "Boceto", hint: "Preliminar" },
+        { word: "Exposición", hint: "Muestra" },
+        { word: "Retrato", hint: "Persona" },
+        { word: "Paisaje", hint: "Naturaleza" },
+      ],
+    },
+    juegos: {
+      general: [
+        { word: "Tablero", hint: "Juego de mesa" },
+        { word: "Ficha", hint: "Pieza" },
+        { word: "Dado", hint: "Número" },
+        { word: "Cartas", hint: "Mazo" },
+        { word: "Ajedrez", hint: "Rey" },
+        { word: "Monopoly", hint: "Dinero" },
+        { word: "Scrabble", hint: "Palabras" },
+        { word: "Parchís", hint: "Casillas" },
+        { word: "Dominó", hint: "Piezas" },
+        { word: "Ruleta", hint: "Casino" },
+        { word: "Truco", hint: "Mentira" },
+        { word: "Cartagena", hint: "Piratas" },
+        { word: "Clue", hint: "Asesinato" },
+        { word: "Risk", hint: "Conquista" },
+        { word: "Jenga", hint: "Bloques" },
+        { word: "Twister", hint: "Colores" },
+      ],    
+    },
+    television: {
+      general: [
+        { word: "Serie", hint: "Episodios" },
+        { word: "Canal", hint: "Televisión" },
+        { word: "Control remoto", hint: "Mando" },
+        { word: "Episodio", hint: "Parte" },
+        { word: "Temporada", hint: "Conjunto" },
+        { word: "Actor", hint: "Interpretación" },
+        { word: "Actriz", hint: "Interpretación" },
+        { word: "Guion", hint: "Texto" },
+        { word: "Director", hint: "Ordena" },
+        { word: "Productor", hint: "Financia" },
+        { word: "Reality show", hint: "Realidad" },
+        { word: "Comedia", hint: "Risa" },
+        { word: "Drama", hint: "Emoción" },
+        { word: "Noticiero", hint: "Noticias" },
+        { word: "Documental", hint: "Realidad" },
+        { word: "Talk show", hint: "Entrevistas" },
+      ],    
+    },
+    deportes: {
+      general: [
+        { word: "Fútbol", hint: "Balón" },
+        { word: "Baloncesto", hint: "Canasta" },
+        { word: "Tenis", hint: "Raqueta" },
+        { word: "Natación", hint: "Agua" },
+        { word: "Ciclismo", hint: "Bicicleta" },
+        { word: "Atletismo", hint: "Carrera" },
+        { word: "Boxeo", hint: "Guantes" },
+        { word: "Golf", hint: "Hoyo" },
+        { word: "Rugby", hint: "Try" },
+        { word: "Vóley", hint: "Red" },
+        { word: "Hockey", hint: "Palo" },
+        { word: "Esquí", hint: "Nieve" },
+        { word: "Surf", hint: "Olas" },
+        { word: "Skateboarding", hint: "Patineta" },
+        { word: "Boxeo", hint: "Ring" },
+        { word: "Arco y flecha", hint: "Tiro" },
+      ],    
+    },
+    naturaleza: {
+      general: [
+        { word: "Árbol", hint: "Bosque" },
+        { word: "Río", hint: "Agua" },
+        { word: "Montaña", hint: "Altura" },
+        { word: "Flor", hint: "Jardín" },
+        { word: "Animal", hint: "Fauna" },
+        { word: "Insecto", hint: "Pequeño" },
+        { word: "Lago", hint: "Agua" },
+        { word: "Mariposa", hint: "Alas" },
+        { word: "Cielo", hint: "Azul" },
+        { word: "Nube", hint: "Algodón" },
+        { word: "Playa", hint: "Arena" },
+        { word: "Selva", hint: "Tropical" },
+        { word: "Desierto", hint: "Arena" },
+        { word: "Volcán", hint: "Erupción" },
+        { word: "Océano", hint: "Profundidad" },
+        { word: "Cascada", hint: "Caída" },
+      ],    
+    },
+    literatura: {
+      general: [
+        { word: "Libro", hint: "Páginas" },
+        { word: "Autor", hint: "Escritor" },
+        { word: "Novela", hint: "Ficción" },
+        { word: "Poema", hint: "Verso" },
+        { word: "Cuento", hint: "Historia" },
+        { word: "Biblioteca", hint: "Libros" },
+        { word: "Capítulo", hint: "Sección" },
+        { word: "Personaje", hint: "Protagonista" },
+        { word: "Trama", hint: "Argumento" },
+        { word: "Género", hint: "Tipo" },
+        { word: "Ensayo", hint: "Análisis" },
+        { word: "Ficción", hint: "Imaginación" },
+        { word: "No ficción", hint: "Realidad" },
+        { word: "Biografía", hint: "Vida" },
+        { word: "Autobiografía", hint: "Propia" },
+        { word: "Editorial", hint: "Publicación" },
+      ],    
+    },
+    historia: {
+      general: [
+        { word: "Guerra", hint: "Conflicto" },
+        { word: "Revolución", hint: "Cambio" },
+        { word: "Imperio", hint: "Dominio" },
+        { word: "Monarquía", hint: "Rey" },
+        { word: "Democracia", hint: "Pueblo" },
+        { word: "Colonización", hint: "Exploración" },
+        { word: "Independencia", hint: "Libertad" },
+        { word: "Tratado", hint: "Acuerdo" },
+        { word: "Batalla", hint: "Lucha" },
+        { word: "Civilización", hint: "Cultura" },
+        { word: "Arqueología", hint: "Restos" },
+        { word: "Antigüedad", hint: "Pasado" },
+        { word: "Edad Media", hint: "Castillos" },
+        { word: "Renacimiento", hint: "Arte" },
+        { word: "Revolución Industrial", hint: "Máquinas" },
+        { word: "Siglo", hint: "Cien años" },
+      ],    
+    },
+    ciencia: {
+      general: [
+        { word: "Átomo", hint: "Partícula" },
+        { word: "Molécula", hint: "Composición" },
+        { word: "Célula", hint: "Vida" },
+        { word: "Energía", hint: "Fuerza" },
+        { word: "Gravedad", hint: "Atracción" },
+        { word: "Evolución", hint: "Cambio" },
+        { word: "Genética", hint: "ADN" },
+        { word: "Experimento", hint: "Prueba" },
+        { word: "Teoría", hint: "Explicación" },
+        { word: "Hipótesis", hint: "Suposición" },
+        { word: "Partícula", hint: "Pequeña" },
+        { word: "Física", hint: "Leyes" },
+        { word: "Química", hint: "Reacciones" },
+        { word: "Biología", hint: "Seres vivos" },
+        { word: "Astronomía", hint: "Estrellas" },
+        { word: "Geología", hint: "Tierra" },
+      ],    
+    },
+    lugares: { 
+      general: [
+        { word: "Parque", hint: "Naturaleza" },
+        { word: "Museo", hint: "Arte" },
+        { word: "Restaurante", hint: "Comida" },
+        { word: "Cine", hint: "Películas" },
+        { word: "Teatro", hint: "Escenario" },
+        { word: "Biblioteca", hint: "Libros" },
+        { word: "Playa", hint: "Arena" },
+        { word: "Montaña", hint: "Altura" },
+        { word: "Ciudad", hint: "Urbano" },
+        { word: "Pueblo", hint: "Pequeño" },
+        { word: "Hotel", hint: "Alojamiento" },
+        { word: "Aeropuerto", hint: "Aviones" },
+        { word: "Estación", hint: "Trenes" },
+        { word: "Iglesia", hint: "Religión" },
+        { word: "Castillo", hint: "Fortaleza" },
+        { word: "Monumento", hint: "Historia" },
+      ],    
+    },
+  };
+
+  const defaultPlayers = [
+    { id: "1", name: "Jugador 1", color: "#FF3B30" },
+    { id: "2", name: "Jugador 2", color: "#34C759" },
+    { id: "3", name: "Jugador 3", color: "#007AFF" },
+  ];
+
+  // 📦 Cargar jugadores guardados
+  useEffect(() => {
+    const loadPlayers = async () => {
+      try {
+        const stored = await AsyncStorage.getItem("players");
+        if (stored) {
+          setPlayers(JSON.parse(stored));
+        } else {
+          setPlayers(defaultPlayers);
+        }
+      } catch (e) {
+        console.log("Error cargando jugadores:", e);
+        setPlayers(defaultPlayers);
+      }
+    };
+    loadPlayers();
+  }, []);
+
+  // 💾 Guardar jugadores cuando cambien
+  useEffect(() => {
+    if (players.length > 0) {
+      AsyncStorage.setItem("players", JSON.stringify(players));
     }
   }, [players]);
 
-const defaultWords = {
-  general: {
-    general: [
-      "Perro", "Gato", "Mate", "Café", "Playa", "Montaña", "Pizza", "Escuela", "Avión", "Computadora",
-      "Hospital", "Libro", "Reloj", "Teléfono", "Cine", "Museo", "Jardín", "Supermercado", "Helado", "Amigo",
-      "Familia", "Trabajo", "Fiesta", "Chocolate", "Sombrero", "Ventana", "Camisa", "Auto", "Moto", "Bicicleta",
-      "Lluvia", "Sol", "Nieve", "Ciudad", "Campo", "Río", "Bosque", "Casa", "Hotel", "Cama", "Radio",
-      "Televisor", "Comida", "Puerta", "Zapato", "Mesa", "Silla", "Lámpara", "Escalera", "Puente", "Carpeta",
-      // 🇺🇾🇦🇷 Locales:
-      "Asado", "Parrilla", "Ferné", "Termo", "Bombilla", "Ñeri", "Che", "Boliche", "Colectivo", "Camioneta",
-      "Barrio", "Panchería", "Fiambrería", "Kiosco", "Mate dulce", "Yerba", "Refresco", "Pancho", "Empanada", "Milanga",
-    ],
-  },
-
-  futbol: {
-    general: [
-      "Pelota", "Árbitro", "Arco", "Cancha", "Offside", "Penal", "Hincha", "Campeón", "Tiro libre", "Corner",
-      "Gol", "Expulsión", "VAR", "Final", "Mundial", "Camiseta", "Botines", "Entrenador", "Capitán", "Cambio",
-      "Lesión", "Tribuna", "Clásico", "Derrota", "Victoria", "Empate", "Táctica", "Defensa", "Ataque", "Medio campo",
-      "Bombonera", "Monumental", "Centenario", "Campeón del Siglo", "Celeste", "Albiceleste", "Charrúa", "Barras", "Hinchas", "Mate en la cancha",
-      "Picado", "Fútbol 5", "Cancha de barrio", "Clásico del Río de la Plata", "Final del mundo", "Selección", "DT", "Golero", "Patadura", "Pelotazo",
-    ],
-    jugadores: [
-      "Maradona", "Pelé", "Zidane", "Ronaldinho", "Ronaldo Nazário", "Henry", "Beckham", "Baresi", "Cannavaro", "Buffon",
-        "Iniesta", "Xavi", "Pirlo", "Totti", "Del Piero", "Raúl", "Casillas", "Kaká", "Shevchenko", "Maldini",
-        "Batistuta", "Riquelme", "Crespo", "Aimar", "Simeone", "Tevez", "Gallardo", "Verón", "Francescoli", "Forlán",
-        "Recoba", "Rubén Sosa", "Obdulio Varela", "Ghiggia", "Luis Cubilla", "Enzo Francescoli", "El Loco Abreu", "Higuita", "Valderrama", "Puyol",
-        "Roberto Carlos", "Cafu", "Van Nistelrooy", "Lampard", "Gerrard", "Scholes", "Cantona", "Vieira", "Zamorano", "Stoichkov",
-      "Messi", "Cristiano Ronaldo", "Neymar", "Mbappé", "Haaland", "Vinicius Jr", "Rodrygo", "Bellingham", "Valverde", "Enzo Fernández",
-        "Julián Álvarez", "Lautaro Martínez", "Di María", "De Paul", "Otamendi", "Romero", "Martínez", "Paredes", "Garnacho", "Dybala",
-        "Suárez", "Cavani", "Núñez", "Araujo", "De La Cruz", "Bentancur", "Ugarte", "Torres", "Vecino", "Giménez",
-        "Modric", "Kroos", "Rodri", "Pedri", "Gavi", "Lewandowski", "Kane", "Saka", "Foden", "Barella",
-        "Osimhen", "Giroud", "Griezmann", "Upamecano", "Koundé", "Hakimi", "Onana", "Rashford", "Bruno Fernandes", "Rice",
-        "Musiala", "Coman", "Chiesa", "Son Heung-min", "Trossard", "Martín Cáceres", "Brian Rodríguez", "Maxi Araújo", "Facundo Torres", "Viña",
-    ],
-    equipos: [
-      "Boca Juniors", "River Plate", "Peñarol", "Nacional", "Defensor Sporting", "Danubio", "Liverpool (URU)", "Racing Club", "Independiente",
-      "San Lorenzo", "Estudiantes", "Newell's", "Rosario Central", "Colón", "Gimnasia", "Lanús", "Talleres", "Vélez", "Argentinos Juniors", "Racing (URU)",
-      "Real Madrid", "Barcelona", "PSG", "Manchester City", "Juventus", "Bayern Múnich", "Inter", "Napoli", "Flamengo", "Palmeiras",
-      "Benfica", "Chelsea", "Arsenal", "Liverpool", "Atlético de Madrid", "Borussia Dortmund", "Ajax", "Porto", "AC Milan", "Roma",
-    ],
-  },
-
-  musica: {
-    general: [
-      "Guitarra", "Batería", "Micrófono", "Concierto", "Rock", "Pop", "Reggaetón", "Nota", "DJ", "Melodía",
-      "Ritmo", "Disco", "Grabación", "Escenario", "Auriculares", "Altavoz", "Festival", "Baile", "Letra", "Coro",
-      "Instrumento", "Piano", "Violín", "Bajo", "Ensayo", "Cumbia", "Murga", "Tambor", "Milonga", "Folklore",
-      
-    ],
-    cantantes: [
-      "Abel Pintos", "Soledad", "Chano", "Wos", "Nicki Nicole", "Bizarrap", "Trueno", "Duki", "Maria Becerra", "Tini",
-      "Callejeros", "No Te Va Gustar", "La Vela Puerca", "El Cuarteto de Nos", "Lucas Sugo", "Jaime Roos", "Rombai", "Marama",
-      "Los Auténticos Decadentes", "Los Fabulosos Cadillacs", "Soda Stereo", "Gustavo Cerati", "Ciro", "Andrés Calamaro", "Fito Páez",
-      "La Renga", "Patricio Rey", "Tan Biónica", "Bersuit", "Axel",
-      "Taylor Swift", "Bad Bunny", "Queen", "The Beatles", "Shakira", "Maluma", "Dua Lipa", "Ozuna", "Adele", "Bruno Mars",
-      "Billie Eilish", "Ed Sheeran", "Rauw Alejandro", "Karol G", "Beyoncé", "Michael Jackson", "The Weeknd", "Coldplay",
-      "Rosalía", "Justin Bieber", "Harry Styles", "Nirvana", "Selena Gomez", "Post Malone", "Drake", "Luis Fonsi", "Daddy Yankee",
-      "Jennifer Lopez", "Camila Cabello", "Imagine Dragons", "Eminem", "Katy Perry",
-    ],
-    canciones: [
-      "La Cumbia de los Trapos", "De Música Ligera", "En el Balcón", "Ciudad Mágica", "Me Hace Bien", "Brindis", "Todo Cambia", 
-      "Arrancármelo", "Ella Baila Sola", "Loco", "Y Sin Embargo", "Don", "Crimen", "Color Esperanza", "Mi Princesa", "La Noche",
-      "Cielito Lindo", "Cuando Pase el Temblor", "Persiana Americana", "Madura", "Bipolar", "Universo Paralelo",
-      "Bohemian Rhapsody", "Despacito", "Smells Like Teen Spirit", "Thriller", "Hey Jude", "Havana", "Blinding Lights", "As It Was",
-      "Shape of You", "Uptown Funk", "Someone Like You", "Levitating", "Flowers", "Dance Monkey", "Tusa", "La Canción",
-      "Rolling in the Deep", "Bad Guy", "Perfect", "Viva la Vida", "Peaches", "Señorita", "Calma", "Tití Me Preguntó",
-      "Stay", "Shallow", "Rockstar", "Dákiti", "Montero", "Umbrella",
-    ],
-  },
-
-  cine: {
-    general: [
-      "Actor", "Cámara", "Palomitas", "Acción", "Director", "Drama", "Comedia", "Terror", "Oscar", "Escena",
-      "Guión", "Rodaje", "Tráiler", "Cineasta", "Pantalla", "Butaca", "Proyector", "Crítica", "Vestuario", "Maquillaje",
-      "Efectos especiales", "Sonido", "Clímax", "Secuela", "Película", "Serie", "Documental", "Netflix", "Estreno", "Spoiler",
-      "Popcorn", "Cinépolis", "Sala", "Protagonista", "Cortometraje",
-    ],
-    peliculas: [
-      "Titanic", "Avatar", "Avengers", "El Padrino", "Star Wars", "Jurassic Park", "Matrix", "Inception", "Toy Story", "Frozen",
-      "Spider-Man", "Batman", "Harry Potter", "Shrek", "Coco", "Cars", "Oppenheimer", "Barbie", "Encanto", "Los Increíbles",
-      "Relatos Salvajes", "El Secreto de Sus Ojos", "Nueve Reinas", "Whisky", "Mr. Kaplan", "Mi Mundial", "El Robo del Siglo",
-    ],
-    actores: [
-      "Leonardo DiCaprio", "Tom Hanks", "Robert Downey Jr.", "Scarlett Johansson", "Emma Stone", "Will Smith", "Brad Pitt", "Johnny Depp",
-      "Morgan Freeman", "Anne Hathaway", "Ricardo Darín", "Guillermo Francella", "Nancy Dupláa", "Luis Brandoni", "Natalia Oreiro",
-      "César Troncoso", "China Zorrilla", "Hugh Jackman", "Zendaya", "Dwayne Johnson", "Chris Evans", "Meryl Streep",
-    ],
-  },
-
-  comida: {
-    general: [
-      "Pizza", "Hamburguesa", "Papas fritas", "Helado", "Empanada", "Asado", "Milanesa", "Chivito", "Pancho", "Tarta",
-      "Pastel", "Tortilla", "Fainá", "Choripán", "Panchito", "Lasaña", "Ñoquis", "Ravioles", "Parrilla", "Dulce de leche",
-      "Bizcocho", "Medialuna", "Pan", "Mate", "Alfajor", "Facturas", "Postre", "Torta frita", "Sanguche", "Canelones",
-    ],
-  },
-
-  tecnologia: {
-    general: [
-      "Computadora", "Mouse", "Teclado", "Celular", "Tablet", "Wi-Fi", "Cable", "Internet", "Pantalla", "App",
-      "Red social", "Videojuego", "Carga", "Bluetooth", "Auriculares", "Robot", "ChatGPT", "Impresora", "USB", "Cámara",
-      "Reproductor", "Consola", "Control", "Tecla", "Programador", "Código", "Bug", "Pantallazo", "Servidor", "Nube",
-    ],
-  },
-
-  paises: {
-    general: [
-      "Uruguay", "Argentina", "Brasil", "Chile", "Paraguay", "Bolivia", "Perú", "Ecuador", "Colombia", "Venezuela",
-      "México", "Estados Unidos", "España", "Italia", "Francia", "Alemania", "Portugal", "Japón", "China", "Rusia",
-      "Canadá", "Australia", "Suiza", "Grecia", "Irlanda", "Holanda", "Suecia", "Corea del Sur", "Sudáfrica", "Egipto",
-    ],
-  },
-
-  videojuegos: {
-    general: [
-      "PlayStation", "Xbox", "Nintendo", "Mario", "Zelda", "Minecraft", "FIFA", "GTA", "Counter Strike", "Valorant",
-      "Fortnite", "Call of Duty", "Among Us", "The Sims", "LOL", "PUBG", "Rocket League", "Pokémon", "Tetris", "Sonic",
-      "Pac-Man", "Guitar Hero", "Crash Bandicoot", "Red Dead", "Roblox", "Fall Guys", "Free Fire", "Skyrim", "Halo", "Overwatch",
-    ],
-  },
-};
-
-
+  // 🔄 Reiniciar sin borrar jugadores
   const resetGame = () => {
-    setPlayers([]);
     setImpostorId(null);
     setWord("");
+    setHint("");
     setGameWinner(null);
-    setAlivePlayers([]); // ✅ limpiar vivos
+    setAlivePlayers([]);
   };
 
-  // 🧠 context/GameContext.js (función startGame)
+  // 🚀 Iniciar partida
+  const startGame = (count = impostorCount, category = "general", subCategory = "general") => {
+    if (word && hint) {
+      console.log("⏩ Juego ya iniciado, usando palabra existente:", word);
+      return { word, hint, impostorId, category, subCategory };
+    }
 
-const startGame = (impostorCount = 1, category = "general", subCategory = "general") => {
-  if (!Array.isArray(players) || players.length === 0) {
-    console.warn("❌ No hay jugadores para iniciar el juego");
-    return;
-  }
+    const chosenCategory = defaultWords[category] ? category : "general";
+    const subCategories = defaultWords[chosenCategory];
+    const subCategoryKeys = Object.keys(subCategories);
+    const chosenSubCategory = subCategoryKeys.includes(subCategory)
+      ? subCategory
+      : "general";
 
-  // ✅ Validar categoría
-  const chosenCategory = defaultWords[category] ? category : "general";
-  const subCategories = defaultWords[chosenCategory];
-  const subCategoryKeys = Object.keys(subCategories);
+    const words = subCategories[chosenSubCategory];
+    const pick = words[Math.floor(Math.random() * words.length)];
 
-  // ✅ Validar subcategoría
-  const chosenSubCategory = subCategoryKeys.includes(subCategory)
-    ? subCategory
-    : "general";
+    setWord(pick.word);
+    setHint(pick.hint);
 
-  const words = subCategories[chosenSubCategory];
-  const pick = words[Math.floor(Math.random() * words.length)];
-  setWord(pick);
+    const impostorCountToUse = Math.min(count, players.length - 1);
+    const shuffled = [...players].sort(() => Math.random() - 0.5);
+    const impostorPlayers = shuffled.slice(0, impostorCountToUse);
+    const impostorIds = impostorPlayers.map((p) => p.id);
 
-  // 🎭 Elegir impostores
-  const impostorCountToUse = Math.min(impostorCount, players.length - 1);
-  const shuffled = [...players].sort(() => Math.random() - 0.5);
-  const impostorPlayers = shuffled.slice(0, impostorCountToUse);
-  const impostorIds = impostorPlayers.map((p) => p.id);
+    setImpostorId(impostorIds[0]);
 
-  setImpostorId(impostorIds[0]);
+    console.log("🕵️ Impostores:", impostorIds);
+    console.log("📜 Palabra:", pick.word, "| 💡 hint:", pick.hint);
 
-  console.log("🕵️ Impostores asignados:", impostorIds);
-  console.log("📜 Palabra elegida:", pick, "🗂️ Categoría:", chosenCategory, "/", chosenSubCategory);
-
-  return {
-    impostorId: impostorIds[0],
-    impostorIds,
-    word: pick,
-    category: chosenCategory,
-    subCategory: chosenSubCategory,
+    return {
+      impostorId: impostorIds[0],
+      impostorIds,
+      word: pick.word,
+      hint: pick.hint,
+      category: chosenCategory,
+      subCategory: chosenSubCategory,
+    };
   };
-};
-
 
   return (
     <GameContext.Provider
       value={{
-        players, setPlayers,
-        alivePlayers, setAlivePlayers,
-        impostorId, setImpostorId,
-        startGame, resetGame,
-        gameWinner, setGameWinner,
-        word, setWord,
-        categories: Object.keys(defaultWords), // 🔹 ["general", "futbol", "musica", "cine"]
+        players,
+        setPlayers,
+        alivePlayers,
+        setAlivePlayers,
+        impostorId,
+        setImpostorId,
+        startGame,
+        resetGame,
+        gameWinner,
+        setGameWinner,
+        word,
+        setWord,
+        hint,
+        setHint,
+        categories: Object.keys(defaultWords),
         getSubCategories: (cat) => Object.keys(defaultWords[cat] || { general: [] }),
         defaultWords,
-        category, setCategory,
-        subCategory, setSubCategory,
+        category,
+        setCategory,
+        subCategory,
+        setSubCategory,
+        soundEnabled,
+        setSoundEnabled,
+        impostorCount,
+        setImpostorCount,
+        setHintsEnabled,
       }}
     >
       {children}
     </GameContext.Provider>
-      );
+  );
 }
 
 export const useGameContext = () => useContext(GameContext);

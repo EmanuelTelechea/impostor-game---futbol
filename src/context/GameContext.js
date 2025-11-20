@@ -5,7 +5,7 @@ export const GameContext = createContext({});
 
 export function GameProvider({ children }) {
   const [players, setPlayers] = useState([]);
-  const [impostorId, setImpostorId] = useState(null);
+  const [impostorIds, setImpostorIds] = useState([]);
   const [word, setWord] = useState("");
   const [hint, setHint] = useState(""); // 💡 NUEVO: hint
   const [gameWinner, setGameWinner] = useState(null);
@@ -987,7 +987,7 @@ useEffect(() => {
 
   // 🔄 Reiniciar sin borrar jugadores
   const resetGame = () => {
-    setImpostorId(null);
+    setImpostorIds([]);
     setWord("");
     setHint("");
     setGameWinner(null);
@@ -996,43 +996,39 @@ useEffect(() => {
 
   // 🚀 Iniciar partida
   const startGame = (count = impostorCount, category = "general", subCategory = "general") => {
-    if (word && hint) {
-      console.log("⏩ Juego ya iniciado, usando palabra existente:", word);
-      return { word, hint, impostorId, category, subCategory };
-    }
+  if (word && hint) {
+    return { word, hint, impostorIds, category, subCategory };
+  }
 
-    const chosenCategory = defaultWords[category] ? category : "general";
-    const subCategories = defaultWords[chosenCategory];
-    const subCategoryKeys = Object.keys(subCategories);
-    const chosenSubCategory = subCategoryKeys.includes(subCategory)
-      ? subCategory
-      : "general";
+  const chosenCategory = defaultWords[category] ? category : "general";
+  const chosenSubCategory = defaultWords[chosenCategory][subCategory]
+    ? subCategory
+    : "general";
 
-    const words = subCategories[chosenSubCategory];
-    const pick = words[Math.floor(Math.random() * words.length)];
+  const words = defaultWords[chosenCategory][chosenSubCategory];
+  const pick = words[Math.floor(Math.random() * words.length)];
 
-    setWord(pick.word);
-    setHint(pick.hint);
+  setWord(pick.word);
+  setHint(pick.hint);
 
-    const impostorCountToUse = Math.min(count, players.length - 1);
-    const shuffled = [...players].sort(() => Math.random() - 0.5);
-    const impostorPlayers = shuffled.slice(0, impostorCountToUse);
-    const impostorIds = impostorPlayers.map((p) => p.id);
+  const impostorCountToUse = Math.min(count, players.length - 1);
+  const shuffled = [...players].sort(() => Math.random() - 0.5);
 
-    setImpostorId(impostorIds[0]);
+  const impostorPlayers = shuffled.slice(0, impostorCountToUse);
+  const impostorIds = impostorPlayers.map(p => p.id);
 
-    console.log("🕵️ Impostores:", impostorIds);
-    console.log("📜 Palabra:", pick.word, "| 💡 hint:", pick.hint);
+  setImpostorIds(impostorIds); 
+console.log("🤖 Impostores generados:", impostorIds);
 
-    return {
-      impostorId: impostorIds[0],
-      impostorIds,
-      word: pick.word,
-      hint: pick.hint,
-      category: chosenCategory,
-      subCategory: chosenSubCategory,
-    };
-  };
+  return {
+  impostorIds,
+  word: pick.word,
+  hint: pick.hint,
+  category: chosenCategory,
+  subCategory: chosenSubCategory,
+};
+
+};
 
   return (
     <GameContext.Provider
@@ -1041,8 +1037,6 @@ useEffect(() => {
         setPlayers,
         alivePlayers,
         setAlivePlayers,
-        impostorId,
-        setImpostorId,
         startGame,
         resetGame,
         gameWinner,
@@ -1063,6 +1057,8 @@ useEffect(() => {
         impostorCount,
         setImpostorCount,
         setHintsEnabled,
+        impostorIds,      // ✅ agregar
+        setImpostorIds, 
       }}
     >
       {children}

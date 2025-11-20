@@ -12,11 +12,39 @@ export default function ResultScreen() {
 
   if (!fontsLoaded) return <ActivityIndicator size="large" color="#FFD93D" />;
 
-  // Si no hay ganador, mostrar fallback con botones seguros
+  // --- Lógica del ganador y colores ---
+  const normalized = String(gameWinner || "").toLowerCase(); // Aseguramos que sea una cadena para evitar problemas
+  const isImpostor = normalized === "impostor";
+
+  const titleText = isImpostor ? "¡El impostor ganó!" : "¡La tripulación gana!";
+  const emoji = isImpostor ? "" : "";
+  const resultTitle = `${emoji} ${titleText}`;
+  
+  // Colores para el tema de la pantalla (gradiente de fondo y colores primarios)
+  const theme = {
+    impostor: {
+      gradient: ["#450920", "#831843", "#BE123C"], // Rojos oscuros y dramáticos
+      primaryColor: "#FFD93D", // Amarillo de contraste para el Impostor
+    },
+    tripulantes: {
+      gradient: ["#0D1B2A", "#1B263B", "#415A77"], // Azules oscuros
+      primaryColor: "#B5FF9E", // Verde/Lima de contraste para la Tripulación
+    },
+    default: {
+      gradient: ["#0D1B2A", "#1B263B", "#415A77"],
+      primaryColor: "#FFD93D",
+    },
+  };
+  
+  const currentTheme = theme[isImpostor ? 'impostor' : 'tripulantes'] || theme.default;
+  const buttonColor = currentTheme.primaryColor;
+
+  // Si no hay ganador, mostrar fallback
   if (!gameWinner) {
+    // ... (El fallback se mantiene igual, pero aplicamos los nuevos estilos de botón)
     return (
-      <LinearGradient colors={["#0D1B2A", "#1B263B", "#415A77"]} style={styles.container}>
-        <Text style={[styles.title, { color: "#FFD93D" }]}>😕 No hay resultado</Text>
+      <LinearGradient colors={currentTheme.gradient} style={styles.container}>
+        <Text style={[styles.title, { color: currentTheme.primaryColor }]}>No hay resultado</Text>
 
         <TouchableOpacity
           style={[styles.button, { backgroundColor: "#FF3B30" }]}
@@ -25,11 +53,11 @@ export default function ResultScreen() {
             navigation.reset({ index: 0, routes: [{ name: "Home" }] });
           }}
         >
-          <Text style={styles.buttonText}>🏠 Volver al menú</Text>
+          <Text style={styles.buttonText}>Volver al menú</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.button, { backgroundColor: "#FFD93D" }]}
+          style={[styles.button, { backgroundColor: buttonColor }]}
           onPress={() => {
             resetGame && resetGame();
             navigation.reset({
@@ -38,17 +66,13 @@ export default function ResultScreen() {
             });
           }}
         >
-          <Text style={[styles.buttonText, { color: "#000" }]}>🎮 Configurar jugadores</Text>
+          <Text style={[styles.buttonText, { color: "#000" }]}>Configurar jugadores</Text>
         </TouchableOpacity>
       </LinearGradient>
     );
   }
 
-  const normalized = String(gameWinner).toLowerCase();
-  const isImpostor = normalized === "impostor";
-
-  const title = isImpostor ? "¡El impostor ganó!" : "¡La tripulación gana!";
-  const color = isImpostor ? "#FF4E6E" : "#4EFF9A";
+  // ... (Funciones handlePlayAgain y handleBackToMenu se mantienen)
 
   const handlePlayAgain = () => {
     resetGame && resetGame();
@@ -66,29 +90,29 @@ export default function ResultScreen() {
     });
   };
 
+  // --- Renderizado de resultados ---
   return (
-    <LinearGradient colors={["#0D1B2A", "#1B263B", "#415A77"]} style={styles.container}>
-      <View style={styles.resultBox}>
-        <Text style={[styles.title, { color }]}>{title}</Text>
+    <LinearGradient colors={currentTheme.gradient} style={styles.container}>
+      <View style={[styles.resultBox, { borderColor: buttonColor }]}>
+        <Text style={[styles.title, { color: currentTheme.primaryColor }]}>{resultTitle}</Text>
 
         <TouchableOpacity
-          style={[styles.button, { backgroundColor: "#FFD93D" }]}
+          style={[styles.button, { backgroundColor: buttonColor }]}
           onPress={handlePlayAgain}
         >
-          <Text style={[styles.buttonText, { color: "#000" }]}>🔁 Jugar de nuevo</Text>
+          <Text style={[styles.buttonText, { color: "#000" }]}>JUGAR DE NUEVO</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.button, { backgroundColor: "#FF3B30" }]}
           onPress={handleBackToMenu}
         >
-          <Text style={styles.buttonText}>🏠 Volver al menú</Text>
+          <Text style={styles.buttonText}>VOLVER AL MENÚ</Text>
         </TouchableOpacity>
       </View>
     </LinearGradient>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -97,32 +121,42 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   resultBox: {
+    // Estilo de caja modal más prominente, similar al de EliminationScreen
     alignItems: "center",
-    backgroundColor: "rgba(255,255,255,0.05)",
-    padding: 30,
-    borderRadius: 20,
-    borderWidth: 2,
-    borderColor: "rgba(255,255,255,0.1)",
+    backgroundColor: "rgba(30, 30, 30, 0.95)", // Fondo oscuro y semi-transparente
+    padding: 35,
+    borderRadius: 15,
+    borderWidth: 4, // Borde más grueso
+    borderColor: "#FFD93D", // Este será sobrescrito por el color del ganador
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.8,
+    shadowRadius: 10,
+    elevation: 15,
+    width: "90%",
   },
   title: {
-    fontSize: 42,
+    fontSize: 36, // Aumentamos el tamaño
     textAlign: "center",
     fontFamily: "LuckiestGuy_400Regular",
-    marginBottom: 50,
-    textShadowColor: "rgba(0,0,0,0.7)",
-    textShadowOffset: { width: 3, height: 3 },
-    textShadowRadius: 6,
+    marginBottom: 40,
+    textShadowColor: "#000",
+    textShadowOffset: { width: 4, height: 4 }, // Sombra más grande y dramática
+    textShadowRadius: 8,
+    lineHeight: 55, // Mejoramos el espaciado si el texto es largo
   },
   button: {
-    width: "80%",
-    paddingVertical: 16,
-    paddingHorizontal: 8,
-    borderRadius: 18,
+    // Estilo de botón consistente con VotingScreen
+    width: "100%", // Ocupa todo el ancho de resultBox
+    paddingVertical: 18,
+    paddingHorizontal: 10,
+    borderRadius: 12,
     alignItems: "center",
     marginVertical: 10,
+    // Sombra más sutil en el botón
     shadowColor: "#000",
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
+    shadowOpacity: 0.5,
+    shadowRadius: 5,
     elevation: 6,
   },
   buttonText: {

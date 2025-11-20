@@ -7,7 +7,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { useGameContext } from "../context/GameContext";
@@ -16,64 +16,89 @@ export default function GameScreen() {
   const navigation = useNavigation();
   const route = useRoute();
 
+  // 1. 🔥 RECUPERAR LA MOCHILA (Params)
+  // Intentamos leer los datos que vienen de WordReveal
+  const paramImpostorIds = route.params?.impostorIds;
+  const paramWord = route.params?.word;
+  const paramCategory = route.params?.category;
+
   const {
     players,
-    impostorId,
     alivePlayers,
     setAlivePlayers,
     setGameWinner,
-    selectedCategory,
+    // 🔥 Importamos la versión plural del contexto por si acaso
+    impostorIds: ctxImpostorIds, 
     setSelectedCategory,
-    word,
   } = useGameContext();
+
+  // 2. 🔥 DEFINIR LA VERDAD ABSOLUTA
+  // Si hay params, úsalos. Si no, usa contexto. Si no, array vacío.
+  const realImpostorIds = (paramImpostorIds && paramImpostorIds.length > 0) 
+    ? paramImpostorIds 
+    : (ctxImpostorIds || []);
+
+  // Usamos la palabra que viene por params o fallback
+  const realWord = paramWord || "Palabra Secreta";
 
   const [index, setIndex] = useState(0);
   const [fontsLoaded] = useFonts({ LuckiestGuy_400Regular });
 
-  // Cargar categoría desde parámetros si llega
+  // Debug para ver qué está llegando
   useEffect(() => {
-    const cat = route?.params?.category;
-    if (cat && typeof setSelectedCategory === "function") {
-      setSelectedCategory(cat);
-    }
-  }, [route?.params]);
+    console.log("🎮 GameScreen Iniciado");
+    console.log("📥 Impostores recibidos (Params):", paramImpostorIds);
+    console.log("📦 Impostores en Contexto:", ctxImpostorIds);
+    console.log("✅ USANDO LISTA:", realImpostorIds);
+  }, []);
 
-  // Inicializa los jugadores vivos si no existen aún
+  // Inicializa los jugadores vivos
   useEffect(() => {
-    if (alivePlayers.length === 0 && Array.isArray(players)) {
+    // Si la lista de vivos está vacía o desincronizada, reiníciala con todos los jugadores
+    if (alivePlayers.length === 0 && Array.isArray(players) && players.length > 0) {
       setAlivePlayers(players);
     }
   }, [players]);
 
   const onEliminate = (id) => {
-    const updated = alivePlayers.filter((p) => p.id !== id);
-    const wasImpostor = id === impostorId;
+    // Filtrar al jugador eliminado
+    const updatedAlive = alivePlayers.filter((p) => p.id !== id);
+    
+    // 🔥 CORRECCIÓN CLAVE:
+    // Verificamos si el ID está DENTRO del array de impostores
+    const wasImpostor = realImpostorIds.includes(id);
+    
     const eliminatedPlayer = alivePlayers.find((p) => p.id === id);
 
-    const impostoresVivos = updated.filter((p) => p.id === impostorId).length;
-    const tripulantesVivos = updated.length - impostoresVivos;
+    // Contar cuántos impostores quedan vivos en la lista 'updatedAlive'
+    const impostoresVivos = updatedAlive.filter((p) => realImpostorIds.includes(p.id)).length;
+    const tripulantesVivos = updatedAlive.length - impostoresVivos;
+
+    console.log(`🔫 Eliminado: ${eliminatedPlayer?.name}. Era impostor? ${wasImpostor}`);
+    console.log(`📊 Quedan: ${impostoresVivos} Impostores vs ${tripulantesVivos} Tripulantes`);
 
     let winner = null;
 
-    if (wasImpostor) {
-      if (impostoresVivos === 0) winner = "tripulantes";
-    } else {
-      if (tripulantesVivos <= impostoresVivos) winner = "impostor";
+    // Lógica de victoria Among Us
+    if (impostoresVivos === 0) {
+      winner = "tripulantes"; // Ganaron los buenos
+    } else if (impostoresVivos >= tripulantesVivos) {
+      winner = "impostor"; // Ganaron los malos (si igualan o superan en número)
     }
 
-    if (!winner) {
-      setGameWinner(null);
-      setAlivePlayers(updated);
-      setIndex(0);
-    } else {
-      setGameWinner(winner);
-    }
+    // Actualizar estado global
+    setAlivePlayers(updatedAlive);
+    if (winner) setGameWinner(winner);
 
+    // Navegar al resultado de la eliminación
+    // 🔥 PASAMOS LA ANTORCHA: Enviamos de nuevo los datos a la siguiente pantalla
     navigation.replace("Elimination", {
+      impostorIds: realImpostorIds, // <--- Vital pasarlo
       eliminatedPlayer,
       wasImpostor,
-      category: selectedCategory,
-      word,
+      category: paramCategory || "General",
+      word: realWord,
+      nextScreen: winner ? "Result" : "Game" // Le decimos a Elimination a dónde ir después
     });
   };
 
@@ -84,12 +109,13 @@ export default function GameScreen() {
   if (!currentPlayer) {
     return (
       <LinearGradient colors={["#16213E", "#0F3460", "#533483"]} style={styles.container}>
-        <Text style={styles.title}>😵 No hay jugadores vivos</Text>
+        <Text style={styles.title}>🏁 Fin de la ronda</Text>
+         {/* Botón de emergencia por si se vacía la lista */}
         <TouchableOpacity
           style={[styles.button, { backgroundColor: "#FF595E" }]}
-          onPress={() => navigation.navigate("Home")}
+          onPress={() => navigation.navigate("Result")}
         >
-          <Text style={styles.buttonText}>Volver al inicio</Text>
+          <Text style={styles.buttonText}>Ver Resultados</Text>
         </TouchableOpacity>
       </LinearGradient>
     );
@@ -102,18 +128,18 @@ export default function GameScreen() {
         exiting={FadeOut.duration(400)}
         style={{ width: "100%", alignItems: "center" }}
       >
-        <Text style={styles.title}>Turno actual:</Text>
-        <Text style={styles.playerName}>{currentPlayer.name}</Text>
+        <Text style={styles.title}>Votación 🗳️</Text>
+        
+        {/* Mostramos la categoría solo como recordatorio */}
+        <Text style={styles.subtitle}>
+           {paramCategory ? paramCategory.toUpperCase() : "Juego en curso"}
+        </Text>
 
-        {selectedCategory && (
-          <Text style={styles.subtitle}>
-            Categoría actual: {selectedCategory.toUpperCase()}
-          </Text>
-        )}
+        <Text style={[styles.subtitle, { marginTop: 20, color: "#FFD93D" }]}>
+            ¿Quién es el impostor? 👇
+        </Text>
 
-        <Text style={[styles.subtitle, { marginTop: 20 }]}>Selecciona a quién eliminar 👇</Text>
-
-        <View style={{ width: "100%", marginTop: 10 }}>
+        <View style={{ width: "100%", marginTop: 20 }}>
           {alivePlayers.map((p) => (
             <TouchableOpacity
               key={p.id}
@@ -121,7 +147,10 @@ export default function GameScreen() {
               onPress={() => onEliminate(p.id)}
               activeOpacity={0.8}
             >
-              <Text style={styles.playerButtonText}>Eliminar a {p.name}</Text>
+              <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20}}>
+                 <Text style={[styles.playerButtonText, {flex: 1, textAlign: 'left'}]}>{p.name}</Text>
+                  <Text style={[styles.playerButtonText, {fontSize: 18}]}>VOTAR 🚀</Text>
+              </View>
             </TouchableOpacity>
           ))}
         </View>
@@ -138,42 +167,37 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   title: {
-    fontSize: 32,
+    fontSize: 36,
     color: "#FFD93D",
     fontFamily: "LuckiestGuy_400Regular",
     textAlign: "center",
-  },
-  playerName: {
-    fontSize: 40,
-    color: "#8CE6FF",
-    fontFamily: "LuckiestGuy_400Regular",
-    marginVertical: 10,
-    textShadowColor: "#000",
-    textShadowOffset: { width: 2, height: 2 },
-    textShadowRadius: 6,
+    marginBottom: 10
   },
   subtitle: {
-    fontSize: 20,
+    fontSize: 18,
     color: "#F8F9FA",
     fontFamily: "LuckiestGuy_400Regular",
     textAlign: "center",
+    opacity: 0.8
   },
   playerButton: {
-    paddingVertical: 14,
+    paddingVertical: 16,
     borderRadius: 18,
-    marginVertical: 6,
-    alignItems: "center",
+    marginVertical: 8,
     shadowColor: "#000",
     shadowOpacity: 0.4,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 3 },
     elevation: 6,
+    width: '100%',
   },
   playerButtonText: {
-    color: "#1E1F2F",
-    fontSize: 22,
+    color: "#fff", // Texto blanco para contrastar con colores de fondo
+    fontSize: 24,
     fontFamily: "LuckiestGuy_400Regular",
-    textAlign: "center",
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: {width: 1, height: 1},
+    textShadowRadius: 2,
   },
   button: {
     paddingVertical: 14,

@@ -11,67 +11,83 @@ export default function HomeScreen({ navigation }) {
     <LinearGradient colors={["#0D1B2A", "#1B263B", "#415A77"]} style={styles.container}>
       <Text style={styles.title}>🎭 El juego del IMPOSTOR 🎭</Text>
 
-      <View style={styles.menuContainer}>
+      {/* Nuevo contenedor estilizado como caja de menú */}
+      <View style={styles.menuBox}>
         <TouchableOpacity
-          style={[styles.button, { backgroundColor: "#68ca2fff" }]}
+          style={[styles.button, { backgroundColor: "#B5FF9E" }]} // Verde lima
           onPress={() => navigation.navigate("OfflineSetup")}
-          activeOpacity={0.9}
+          activeOpacity={0.8}
         >
-          <Text style={styles.buttonText}>🎮 JUGAR OFFLINE</Text>
+          <Text style={[styles.buttonText, { color: "#1B263B" }]}>JUGAR OFFLINE</Text>
         </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[styles.button, { backgroundColor: "#FF8C42" }]}
-        onPress={() => navigation.navigate("Rules")}
-        activeOpacity={0.9}
-      >
-        <Text style={styles.buttonText}>📜 REGLAS</Text>
-      </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.button, { backgroundColor: "#6C63FF" }]}
-          onPress={() => navigation.navigate("Settings")}
-          activeOpacity={0.9}
+          style={[styles.button, { backgroundColor: "#FFD93D" }]} // Amarillo
+          onPress={() => navigation.navigate("Rules")}
+          activeOpacity={0.8}
         >
-          <Text style={styles.buttonText}>⚙️ CONFIGURACIÓN</Text>
+          <Text style={[styles.buttonText, { color: "#1B263B" }]}>REGLAS</Text>
         </TouchableOpacity>
 
+        <TouchableOpacity
+          style={[styles.button, { backgroundColor: "#415A77" }]} 
+          onPress={() => navigation.navigate("Settings")}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.buttonText}>CONFIGURACIÓN</Text>
+        </TouchableOpacity>
       </View>
     </LinearGradient>
   );
 }
-
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: "center", alignItems: "center" },
+  container: { 
+    flex: 1, 
+    justifyContent: "center", 
+    alignItems: "center" 
+  },
   title: {
-    fontSize: 40,
+    fontSize: 45, // Un poco más grande
     color: "#FFD93D",
-    marginBottom: 60,
+    marginBottom: 50, // Separación del menú
     fontFamily: "LuckiestGuy_400Regular",
     textAlign: "center",
-    textShadowColor: "rgba(0,0,0,0.7)",
-    textShadowOffset: { width: 3, height: 4 },
+    paddingHorizontal: 15,
+    textShadowColor: "rgba(0,0,0,0.9)", // Sombra más oscura
+    textShadowOffset: { width: 4, height: 4 }, // Sombra más grande
     textShadowRadius: 8,
   },
-  menuContainer: {
-    width: "100%",
+  menuBox: {
+    // Estilo de caja modal/agrupador
+    width: "90%",
     alignItems: "center",
+    backgroundColor: "rgba(30, 30, 30, 0.9)", // Fondo oscuro semi-transparente
+    paddingVertical: 30,
+    paddingHorizontal: 20,
+    borderRadius: 15,
+    borderWidth: 3,
+    borderColor: "#415A77", // Borde sutil
+    shadowColor: "#000",
+    shadowOpacity: 0.8,
+    shadowRadius: 10,
+    elevation: 15,
   },
   button: {
-    width: "80%",
-    paddingVertical: 20,
-    borderRadius: 20,
+    width: "100%", // Ocupa todo el ancho de la caja
+    paddingVertical: 18, // Ligeramente menos que los botones de resultado
+    borderRadius: 12, // Coherente con VotingScreen
     alignItems: "center",
-    marginBottom: 20,
+    marginVertical: 10,
+    // Sombra para el botón
     shadowColor: "#000",
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.5,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 4 },
     elevation: 6,
   },
   buttonText: {
-    fontSize: 24,
-    color: "#1E1F2F",
+    fontSize: 22,
+    color: "#FFF", // Por defecto, texto blanco
     fontFamily: "LuckiestGuy_400Regular",
     textAlign: "center",
   },

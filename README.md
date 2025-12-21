@@ -42,6 +42,32 @@ To learn more about developing your project with Expo, look at the following res
 - [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
 - [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
 
+---
+
+## Sound (Sonidos en el juego) 🔊
+
+I've added a simple `SoundManager` using `expo-av`. To enable sounds:
+
+1. Install the native audio package:
+
+```bash
+npx expo install expo-av
+```
+
+1. Add your sound files to `src/assets/sounds/` using these recommended names:
+
+- `click.mp3` (botones)
+- `vote.mp3` (votar/expulsar)
+- `reveal.mp3` (mostrar palabra/carta)
+- `win.mp3` (victoria tripulantes)
+- `lose.mp3` (victoria impostores)
+
+1. Restart Metro. The app will attempt to auto-register those files at startup.
+
+2. Sounds respect the `Sonido` toggle in the Home/Settings screen. If `Sonido` está apagado, no se reproducirán.
+
+If you want more places to make sound or different assets, I can add more hooks or a wrapper `SoundTouchable` component.
+
 ## Join the community
 
 Join our community of developers creating universal apps.

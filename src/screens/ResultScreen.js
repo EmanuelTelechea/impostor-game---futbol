@@ -1,81 +1,74 @@
 import { LuckiestGuy_400Regular, useFonts } from "@expo-google-fonts/luckiest-guy";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import { useContext } from "react";
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useContext, useEffect } from "react";
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { GameContext } from "../context/GameContext";
+import { playSound } from "../utils/soundManager";
 
 export default function ResultScreen() {
   const navigation = useNavigation();
   const { gameWinner, resetGame } = useContext(GameContext);
   const [fontsLoaded] = useFonts({ LuckiestGuy_400Regular });
 
-  if (!fontsLoaded) return <ActivityIndicator size="large" color="#FFD93D" />;
-
-  // --- Lógica del ganador y colores ---
-  const normalized = String(gameWinner || "").toLowerCase(); // Aseguramos que sea una cadena para evitar problemas
+  // --- Lógica del Marcador ---
+  const normalized = String(gameWinner || "").toLowerCase();
   const isImpostor = normalized === "impostor";
 
-  const titleText = isImpostor ? "¡El impostor ganó!" : "¡La tripulación gana!";
-  const emoji = isImpostor ? "" : "";
-  const resultTitle = `${emoji} ${titleText}`;
-  
-  // Colores para el tema de la pantalla (gradiente de fondo y colores primarios)
-  const theme = {
-    impostor: {
-      gradient: ["#450920", "#831843", "#BE123C"], // Rojos oscuros y dramáticos
-      primaryColor: "#FFD93D", // Amarillo de contraste para el Impostor
-    },
-    tripulantes: {
-      gradient: ["#0D1B2A", "#1B263B", "#415A77"], // Azules oscuros
-      primaryColor: "#B5FF9E", // Verde/Lima de contraste para la Tripulación
-    },
-    default: {
-      gradient: ["#0D1B2A", "#1B263B", "#415A77"],
-      primaryColor: "#FFD93D",
-    },
-  };
-  
-  const currentTheme = theme[isImpostor ? 'impostor' : 'tripulantes'] || theme.default;
-  const buttonColor = currentTheme.primaryColor;
+  // ✅ HOOKS SIEMPRE ARRIBA (SIN CONDICIONES)
+  useEffect(() => {
+    if (!fontsLoaded) return;
 
-  // Si no hay ganador, mostrar fallback
-  if (!gameWinner) {
-    // ... (El fallback se mantiene igual, pero aplicamos los nuevos estilos de botón)
-    return (
-      <LinearGradient colors={currentTheme.gradient} style={styles.container}>
-        <Text style={[styles.title, { color: currentTheme.primaryColor }]}>No hay resultado</Text>
+    try {
+      if (isImpostor) playSound("lose");
+      else playSound("win");
+    } catch (e) {}
+  }, [fontsLoaded, isImpostor]);
 
-        <TouchableOpacity
-          style={[styles.button, { backgroundColor: "#FF3B30" }]}
-          onPress={() => {
-            resetGame && resetGame();
-            navigation.reset({ index: 0, routes: [{ name: "Home" }] });
-          }}
-        >
-          <Text style={styles.buttonText}>Volver al menú</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.button, { backgroundColor: buttonColor }]}
-          onPress={() => {
-            resetGame && resetGame();
-            navigation.reset({
-              index: 1,
-              routes: [{ name: "Home" }, { name: "OfflineSetup" }],
-            });
-          }}
-        >
-          <Text style={[styles.buttonText, { color: "#000" }]}>Configurar jugadores</Text>
-        </TouchableOpacity>
-      </LinearGradient>
-    );
+  // ⛔ RETURN DESPUÉS DE TODOS LOS HOOKS
+  if (!fontsLoaded) {
+    return <ActivityIndicator size="large" color="#FFF" />;
   }
 
-  // ... (Funciones handlePlayAgain y handleBackToMenu se mantienen)
+  // --- Temas ---
+  const theme = {
+    impostor: {
+      title: "¡GANARON LOS\nSIMULADORES!",
+      subtitle: "El árbitro compró todo...",
+      scoreboardColor: "#212121",
+      borderColor: "#D32F2F",
+      textColor: "#FF5252",
+      buttonColor: "#FF5252",
+    },
+    tripulantes: {
+      title: "¡VICTORIA DEL\nJUEGO LIMPIO!",
+      subtitle: "Se hizo justicia en la cancha ⚽",
+      scoreboardColor: "#1A237E",
+      borderColor: "#FFD700",
+      textColor: "#FFD700",
+      buttonColor: "#FFD700",
+    },
+    default: {
+      title: "PARTIDO SUSPENDIDO",
+      subtitle: "Sin resultados oficiales",
+      scoreboardColor: "#333",
+      borderColor: "#AAA",
+      textColor: "#FFF",
+      buttonColor: "#FFF",
+    },
+  };
+
+  const currentTheme =
+    theme[isImpostor ? "impostor" : gameWinner ? "tripulantes" : "default"];
 
   const handlePlayAgain = () => {
-    resetGame && resetGame();
+    resetGame?.();
     navigation.reset({
       index: 1,
       routes: [{ name: "Home" }, { name: "OfflineSetup" }],
@@ -83,36 +76,107 @@ export default function ResultScreen() {
   };
 
   const handleBackToMenu = () => {
-    resetGame && resetGame();
+    resetGame?.();
     navigation.reset({
       index: 0,
       routes: [{ name: "Home" }],
     });
   };
 
-  // --- Renderizado de resultados ---
+  // --- Fallback sin ganador ---
+  if (!gameWinner) {
+    return (
+      <LinearGradient
+        colors={["#66BB6A", "#2E7D32", "#1B5E20"]}
+        style={styles.container}
+      >
+        <View style={[styles.scoreboard, { borderColor: "#AAA" }]}>
+          <Text style={[styles.title, { color: "#FFF" }]}>
+            PARTIDO ANULADO
+          </Text>
+
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: "#FFF" }]}
+            onPress={() => {
+              playSound("click");
+              handleBackToMenu();
+            }}
+          >
+            <Text style={[styles.buttonText, { color: "#333" }]}>
+              IR AL VESTUARIO
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </LinearGradient>
+    );
+  }
+
+  // --- Resultado Final ---
   return (
-    <LinearGradient colors={currentTheme.gradient} style={styles.container}>
-      <View style={[styles.resultBox, { borderColor: buttonColor }]}>
-        <Text style={[styles.title, { color: currentTheme.primaryColor }]}>{resultTitle}</Text>
+    <LinearGradient
+      colors={["#66BB6A", "#2E7D32", "#1B5E20"]}
+      style={styles.container}
+    >
+      <View
+        style={[
+          styles.scoreboard,
+          {
+            backgroundColor: currentTheme.scoreboardColor,
+            borderColor: currentTheme.borderColor,
+          },
+        ]}
+      >
+        <View style={styles.lightsContainer}>
+          <View
+            style={[styles.light, { backgroundColor: currentTheme.textColor }]}
+          />
+          <View
+            style={[styles.light, { backgroundColor: currentTheme.textColor }]}
+          />
+          <View
+            style={[styles.light, { backgroundColor: currentTheme.textColor }]}
+          />
+        </View>
 
-        <TouchableOpacity
-          style={[styles.button, { backgroundColor: buttonColor }]}
-          onPress={handlePlayAgain}
-        >
-          <Text style={[styles.buttonText, { color: "#000" }]}>JUGAR DE NUEVO</Text>
-        </TouchableOpacity>
+        <Text style={[styles.title, { color: currentTheme.textColor }]}>
+          {currentTheme.title}
+        </Text>
 
-        <TouchableOpacity
-          style={[styles.button, { backgroundColor: "#FF3B30" }]}
-          onPress={handleBackToMenu}
-        >
-          <Text style={styles.buttonText}>VOLVER AL MENÚ</Text>
-        </TouchableOpacity>
+
+        <Text style={[styles.subtitle, { color: "#FFF" }]}>
+          {currentTheme.subtitle}
+        </Text>
+
+        <View style={{ width: "100%", marginTop: 30 }}>
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: currentTheme.buttonColor }]}
+            onPress={() => {
+              playSound("click");
+              handlePlayAgain();
+            }}
+          >
+            <Text style={[styles.buttonText, { color: "#000" }]}>
+              ¡REVANCHA!
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: "#CFD8DC" }]}
+            onPress={() => {
+              playSound("click");
+              handleBackToMenu();
+            }}
+          >
+            <Text style={[styles.buttonText, { color: "#455A64" }]}>
+              VESTUARIO
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </LinearGradient>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -120,48 +184,69 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 20,
   },
-  resultBox: {
-    // Estilo de caja modal más prominente, similar al de EliminationScreen
+  scoreboard: {
     alignItems: "center",
-    backgroundColor: "rgba(30, 30, 30, 0.95)", // Fondo oscuro y semi-transparente
-    padding: 35,
-    borderRadius: 15,
-    borderWidth: 4, // Borde más grueso
-    borderColor: "#FFD93D", // Este será sobrescrito por el color del ganador
+    padding: 30,
+    borderRadius: 20,
+    borderWidth: 6, // Borde grueso estilo marco de pantalla
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 8 },
+    shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.8,
-    shadowRadius: 10,
-    elevation: 15,
-    width: "90%",
+    shadowRadius: 15,
+    elevation: 20,
+    width: "95%",
+    maxWidth: 450,
+  },
+  lightsContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      width: '50%',
+      marginBottom: 20,
+      opacity: 0.8
+  },
+  light: {
+      width: 12,
+      height: 12,
+      borderRadius: 6,
+      shadowColor: "#fff",
+      shadowOpacity: 1,
+      shadowRadius: 5,
+      elevation: 5
   },
   title: {
-    fontSize: 36, // Aumentamos el tamaño
+    fontSize: 38, 
     textAlign: "center",
     fontFamily: "LuckiestGuy_400Regular",
-    marginBottom: 40,
-    textShadowColor: "#000",
-    textShadowOffset: { width: 4, height: 4 }, // Sombra más grande y dramática
-    textShadowRadius: 8,
-    lineHeight: 55, // Mejoramos el espaciado si el texto es largo
+    textShadowColor: "rgba(0,0,0,0.8)",
+    textShadowOffset: { width: 3, height: 3 },
+    textShadowRadius: 10,
+    lineHeight: 45,
+    marginBottom: 10
+  },
+  subtitle: {
+      fontSize: 20,
+      fontFamily: "LuckiestGuy_400Regular",
+      textAlign: 'center',
+      opacity: 0.9,
+      marginBottom: 10
   },
   button: {
-    // Estilo de botón consistente con VotingScreen
-    width: "100%", // Ocupa todo el ancho de resultBox
+    width: "100%", 
     paddingVertical: 18,
     paddingHorizontal: 10,
-    borderRadius: 12,
+    borderRadius: 50,
     alignItems: "center",
     marginVertical: 10,
-    // Sombra más sutil en el botón
     shadowColor: "#000",
     shadowOpacity: 0.5,
     shadowRadius: 5,
     elevation: 6,
+    borderWidth: 2,
+    borderColor: 'rgba(0,0,0,0.1)'
   },
   buttonText: {
-    fontSize: 22,
+    fontSize: 24,
     fontFamily: "LuckiestGuy_400Regular",
-    color: "#fff",
+    textTransform: "uppercase"
   },
 });

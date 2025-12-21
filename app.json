@@ -1,10 +1,15 @@
 {
   "expo": {
-    "name": "impostor-game",
-    "slug": "impostor-game",
+    "name": "Juego del Impostor - Fútbol",
+    "slug": "juego-impostor-futbol",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "splash": {
+      "image": "./assets/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1B5E20"
+    },
+    "icon": "./assets/images/splash.png",
     "scheme": "impostorgame",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -13,13 +18,12 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "foregroundImage": "./assets/images/splash.png",
+        "backgroundColor": "#1B5E20"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.emanuel05.impostorgame"
     },
     "web": {
       "output": "static",
@@ -30,12 +34,12 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/splash.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
+          "backgroundColor": "#1B5E20",
           "dark": {
-            "backgroundColor": "#000000"
+            "backgroundColor": "#1B5E20"
           }
         }
       ],
@@ -44,6 +48,18 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "fa88b8f6-bf93-421c-8251-8d9f2a6bbbd5"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/fa88b8f6-bf93-421c-8251-8d9f2a6bbbd5"
     }
   }
 }

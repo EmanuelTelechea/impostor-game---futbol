@@ -39,10 +39,10 @@ export default function EliminationScreen({ route, navigation }) {
           useNativeDriver: true,
         }),
       ]),
-      Animated.delay(2200),
+      Animated.delay(2500), // Un poco más de tiempo para leer el veredicto
       Animated.timing(fade, {
         toValue: 0,
-        duration: 1200,
+        duration: 1000,
         easing: Easing.inOut(Easing.ease),
         useNativeDriver: true,
       }),
@@ -55,21 +55,22 @@ export default function EliminationScreen({ route, navigation }) {
     });
   }, [gameWinner, navigation, fade, scale]); 
 
-  if (!fontsLoaded) return <ActivityIndicator size="large" color="#FFD93D" />;
+  if (!fontsLoaded) return <ActivityIndicator size="large" color="#FFF" />;
 
-  // --- Lógica Dinámica de Colores ---
+  // --- Lógica Dinámica de Colores (Tema Fútbol) ---
+  // Si era SIMULADOR (Impostor) -> Es algo BUENO para los honestos -> Verde/Dorado (¡Gol!)
+  // Si era HONESTO (Tripulante) -> Es algo MALO (Error arbitral) -> Rojo/Gris (¡Error!)
+  
   const gradientColors = wasImpostor
-    ? ["#991B1B", "#B91C1C", "#EF4444"] // Rojo/Bordeaux para la victoria de los civiles
-    : ["#1D4ED8", "#2563EB", "#3B82F6"]; // Azul/Morado para el error de los civiles
+    ? ["#1B5E20", "#2E7D32", "#4CAF50"] // Verde Victoria (¡Lo atraparon!)
+    : ["#B71C1C", "#D32F2F", "#E53935"]; // Rojo Error (¡Expulsaron mal!)
 
-  // El color del texto de resultado será ROJO si era impostor (victoria) o AMARILLO si no lo era (error).
-  const resultColor = wasImpostor ? "#FFD93D" : "#FF595E"; // Amarillo brillante para la victoria, Rojo para el error.
-
-  // El color del borde del modal será contrario al resultado para destacar el mensaje.
-  const modalBorderColor = wasImpostor ? "#FFD93D" : "#FFF";
-  const separatorColor = wasImpostor ? "#FFD93D" : "#FFF";
-  // --- Fin Lógica Dinámica de Colores ---
-
+  const resultColor = "#FFF"; 
+  const modalBorderColor = "#FFF"; // Borde blanco estilo Tarjeta o TV
+  
+  // Textos temáticos
+  const titleText = `${eliminatedPlayer.name.toUpperCase()} SE VA A LAS DUCHAS`;
+  const verdictText = wasImpostor ? "¡ERA UN SIMULADOR!" : "¡ERROR! JUGABA LIMPIO";
 
   return (
     <LinearGradient colors={gradientColors} style={styles.container}>
@@ -82,28 +83,29 @@ export default function EliminationScreen({ route, navigation }) {
           },
         ]}
       >
+        {/* Tarjeta Roja Gigante / Pantalla VAR */}
         <View style={[
             styles.modalContent, 
-            { borderColor: modalBorderColor } // Aplicamos el color de borde dinámico
+            { borderColor: modalBorderColor } 
         ]}>
-          {/* Primer bloque de texto: ELIMINADO */}
+          
+          {/* Icono superior */}
+          <Text style={styles.cardIcon}>🟥</Text>
+
+          {/* Primer bloque: Jugador expulsado */}
           <Text style={styles.eliminatedText}>
-            <Text style={{ color: resultColor }}> {/* Nombre del jugador toma el color del resultado */}
-              {eliminatedPlayer.name.toUpperCase()}
-            </Text>{" "}
-            FUE ELIMINADO
+             {titleText}
           </Text>
 
-          {/* Separador visual o línea */}
-          <View style={[styles.separator, { backgroundColor: separatorColor }]} />
+          <View style={styles.separator} />
 
-          {/* Segundo bloque de texto: Resultado */}
+          {/* Segundo bloque: Veredicto del VAR */}
+          <Text style={styles.verdictLabel}>VEREDICTO DEL VAR:</Text>
+          
           <Text style={[styles.resultText, { color: resultColor }]}>
-            {wasImpostor
-              ? "¡ERA EL IMPOSTOR!" // Resultado positivo (Eliminado = Impostor)
-              : "NO ERA EL IMPOSTOR..." // Resultado negativo (Eliminado = Civil)
-            }
+            {verdictText}
           </Text>
+
         </View>
       </Animated.View>
     </LinearGradient>
@@ -120,39 +122,58 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 20,
-    width: "90%", 
+    width: "100%", 
+    maxWidth: 500,
   },
   modalContent: {
-    backgroundColor: "rgba(30, 30, 30, 0.95)", 
-    borderRadius: 15,
-    padding: 30,
-    borderWidth: 4,
-    // borderColor se aplica dinámicamente
+    backgroundColor: "rgba(0, 0, 0, 0.4)", // Fondo oscuro sutil para resaltar texto
+    borderRadius: 20,
+    padding: 40,
+    borderWidth: 6, // Borde grueso estilo tarjeta física
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.6,
-    shadowRadius: 10,
-    elevation: 15, 
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.5,
+    shadowRadius: 15,
+    elevation: 20, 
     alignItems: "center",
+    width: '90%',
+  },
+  cardIcon: {
+      fontSize: 60,
+      marginBottom: 10,
+      textShadowColor: 'rgba(0,0,0,0.5)',
+      textShadowRadius: 10
   },
   eliminatedText: {
-    fontSize: 32,
+    fontSize: 34,
     fontFamily: "LuckiestGuy_400Regular",
     textAlign: "center",
     color: "#FFF", 
     marginBottom: 10,
+    textShadowColor: 'rgba(0,0,0,0.8)',
+    textShadowOffset: {width: 2, height: 2},
+    textShadowRadius: 4
   },
   separator: {
-    height: 3,
-    width: "80%",
-    // backgroundColor se aplica dinámicamente
-    marginVertical: 15,
-    borderRadius: 2,
+    height: 2,
+    width: "100%",
+    backgroundColor: "rgba(255,255,255,0.3)",
+    marginVertical: 20,
+  },
+  verdictLabel: {
+      fontSize: 18,
+      color: "#EEE",
+      fontFamily: "LuckiestGuy_400Regular",
+      marginBottom: 5,
+      opacity: 0.9
   },
   resultText: {
-    fontSize: 28, // Aumentamos un poco el tamaño para el énfasis
+    fontSize: 38, 
     fontFamily: "LuckiestGuy_400Regular",
     textAlign: "center",
-    // color se aplica dinámicamente
+    textShadowColor: 'rgba(0,0,0,0.8)',
+    textShadowOffset: {width: 3, height: 3},
+    textShadowRadius: 5,
+    lineHeight: 45
   },
 });

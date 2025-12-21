@@ -4,109 +4,143 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View
 
 export default function RulesScreen({ navigation }) {
   const [fontsLoaded] = useFonts({ LuckiestGuy_400Regular });
-  if (!fontsLoaded) return <ActivityIndicator size="large" color="#FFD93D" />;
+  if (!fontsLoaded) return <ActivityIndicator size="large" color="#FFF" />;
 
   return (
-    <LinearGradient colors={["#0D1B2A", "#1B263B", "#415A77"]} style={styles.container}>
+    // Fondo de Césped
+    <LinearGradient colors={["#66BB6A", "#2E7D32", "#1B5E20"]} style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll}>
-        <Text style={styles.title}>📜 Reglas del Juego</Text>
+        <Text style={styles.title}>📜 REGLAMENTO</Text>
 
+        {/* Caja estilo Pizarra Táctica */}
         <View style={styles.rulesBox}> 
           <Text style={styles.text}>
-            🔹 Cada jugador recibe una palabra, excepto el impostor, que no la conoce.
+            <Text style={styles.highlight}>LA PREVIA:</Text> Todo el equipo recibe la <Text style={styles.highlight}>TÁCTICA SECRETA</Text>, excepto el <Text style={styles.impostorText}>SIMULADOR</Text>, que entra a la cancha sin saber nada.
             {"\n\n"}
-            🔹 Los jugadores deben describir la palabra sin decirla directamente.
+            <Text style={styles.highlight}>EL PARTIDO:</Text> Por turnos, describan la jugada sin ser demasiado obvios. Si sos el Simulador, ¡mentí y actuá para que no te descubran!
             {"\n\n"}
-            🔹 En cada ronda, se vota quién creen que es el impostor.
+            <Text style={styles.highlight}>EL VAR:</Text> Al final de la ronda, todos votan quién merece la Roja. El más votado se va a las duchas.
             {"\n\n"}
-            🔹 Si eliminan al impostor, los demás ganan.
+            <Text style={styles.highlight}>VICTORIA:</Text> Si expulsan al Simulador, gana el <Text style={styles.highlight}>JUEGO LIMPIO</Text>.
             {"\n\n"}
-            🔹 Si se eliminan jugadores inocentes, el juego continúa hasta descubrir al impostor o quedar pocos.
+            <Text style={styles.highlight}>DERROTA:</Text> Si expulsan a demasiados inocentes y el Simulador iguala en número al equipo, ¡él gana el partido!
             {"\n\n"}
           </Text>
-          <Text style={styles.tipText}>
-            🧠 Consejo: describí con cuidado, ni muy directo... ni muy raro 😏
-          </Text>
+          
+          {/* Consejo del DT */}
+          <View style={styles.tipContainer}>
+            <Text style={styles.tipTitle}>CONSEJO DEL DT</Text>
+            <Text style={styles.tipText}>
+               "Tocá y pasá. Da pistas cortas... no le regales la estrategia al rival."
+            </Text>
+          </View>
         </View>
 
         <TouchableOpacity style={styles.btn} onPress={() => navigation.goBack()}>
-          <Text style={styles.btnText}>VOLVER</Text>
+          <Text style={styles.btnText}>VOLVER A LA CANCHA</Text>
         </TouchableOpacity>
       </ScrollView>
     </LinearGradient>
   );
 }
+
 const styles = StyleSheet.create({
   container: { 
     flex: 1,
-    // Eliminamos paddingTop del container, lo manejamos en scroll
   },
   scroll: { 
     flexGrow: 1, 
     justifyContent: "center", 
     alignItems: "center", 
     padding: 25,
-    paddingTop: 50, // Añadimos el padding superior aquí
+    paddingTop: 60, 
   },
   title: {
-    fontSize: 40, // Más grande
-    color: "#FFD93D",
+    fontSize: 42, 
+    color: "#FFF",
     marginBottom: 30,
     fontFamily: "LuckiestGuy_400Regular",
     textAlign: "center",
-    textShadowColor: "rgba(0,0,0,0.9)", // Sombra de texto dramática
-    textShadowOffset: { width: 4, height: 4 }, 
-    textShadowRadius: 8,
+    textShadowColor: "rgba(0,0,0,0.8)", 
+    textShadowOffset: { width: 3, height: 3 }, 
+    textShadowRadius: 5,
+    letterSpacing: 1
   },
   rulesBox: {
-    // Estilo de caja modal/tarjeta para el contenido
     width: "100%", 
-    maxWidth: 600, // Límite para pantallas grandes
-    backgroundColor: "rgba(30, 30, 30, 0.95)",
+    maxWidth: 600, 
+    backgroundColor: "rgba(0, 50, 0, 0.7)", // Verde muy oscuro transparente
     padding: 25,
     borderRadius: 15,
     borderWidth: 3,
-    borderColor: "#FFD93D", // Borde amarillo para resaltar que es información clave
+    borderColor: "#FFF", // Borde blanco pizarra
     shadowColor: "#000",
     shadowOpacity: 0.8,
     shadowRadius: 10,
     elevation: 15,
   },
   text: {
-    color: "#fff",
+    color: "#E0E0E0", // Blanco hueso
     fontSize: 18,
-    lineHeight: 30, // Mayor altura de línea para mejor legibilidad
+    lineHeight: 28, 
     textAlign: "left",
-    marginBottom: 15,
+    marginBottom: 10,
+    fontFamily: "LuckiestGuy_400Regular", // Usamos la fuente también aquí para estilo cartoon
+  },
+  highlight: {
+    color: "#FFEB3B", // Amarillo
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowRadius: 2
+  },
+  impostorText: {
+      color: "#FF5252", // Rojo claro
+      textShadowColor: 'rgba(0,0,0,0.5)',
+      textShadowRadius: 2
+  },
+  
+  // Sección Consejo
+  tipContainer: {
+    marginTop: 15,
+    paddingTop: 15,
+    borderTopWidth: 2,
+    borderTopColor: "rgba(255, 255, 255, 0.2)",
+    alignItems: 'center'
+  },
+  tipTitle: {
+      color: "#FFF",
+      fontSize: 20,
+      fontFamily: "LuckiestGuy_400Regular",
+      marginBottom: 5
   },
   tipText: {
-    color: "#B5FF9E", // Color de contraste para el consejo
+    color: "#B5FF9E", // Verde claro fosforescente
     fontSize: 18,
-    lineHeight: 28,
+    lineHeight: 24,
     textAlign: "center",
-    fontFamily: "LuckiestGuy_400Regular", // Usamos la fuente para destacar
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: "rgba(255, 255, 255, 0.2)",
+    fontStyle: 'italic',
+    fontWeight: 'bold'
   },
+  
+  // Botón
   btn: {
-    // Estilo de botón consistente con HomeScreen
-    marginTop: 40,
-    backgroundColor: "#FF3B30", // Color rojo para un botón de acción secundaria
-    width: "90%",
+    marginTop: 30,
+    backgroundColor: "#FFF", // Blanco (Balón)
+    width: "100%",
     maxWidth: 400,
     paddingVertical: 16,
-    borderRadius: 12,
+    borderRadius: 50,
     alignItems: 'center',
     shadowColor: "#000",
     shadowOpacity: 0.5,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 4 },
     elevation: 6,
+    borderWidth: 2,
+    borderColor: '#DDD'
   },
   btnText: {
     fontSize: 22,
-    color: "#fff",
+    color: "#2E7D32", // Texto Verde
     fontFamily: "LuckiestGuy_400Regular",
   },
 });

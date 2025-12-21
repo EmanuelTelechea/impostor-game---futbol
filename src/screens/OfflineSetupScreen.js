@@ -16,32 +16,17 @@ import {
   View
 } from "react-native";
 import { GameContext } from "../context/GameContext";
-import { playSound } from "../utils/soundManager";
+
 // Habilitar animaciones en Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-// 🎨 Paleta de colores de Camisetas (Kits)
+// 🎨 Paleta de colores cartoon
 const crewColors = [
-  "#F44336", // Rojo
-  "#2196F3", // Azul
-  "#FFEB3B", // Amarillo
-  "#4CAF50", // Verde
-  "#FF9800", // Naranja
-  "#9C27B0", // Violeta
-  "#00BCD4", // Celeste
-  "#795548", // Marrón
-  "#607D8B", // Gris
-  "#E91E63", // Rosa
-  "#CDDC39", // Lima
-  "#3F51B5", // Indigo
-  "#009688", // Verde Azulado
-  "#FFFFFF", // Blanco
-  "#000000", // Negro
-  "#FF5722", // Naranja fuerte
-  "#673AB7", // Morado oscuro
-  "#8BC34A", // Verde claro
+  "#FF6B6B", "#6BFF8B", "#6B8EFF", "#FFF06B", "#AF6BFF", "#FFAB6B",
+  "#6BFFED", "#A3A3A3", "#FF6BF0", "#9F6BFF", "#FF6BB0", "#6BB07D",
+  "#D56BFF", "#FFFFFF", "#6BD0FF", "#6B6BEB", "#8BBD6B", "#6BFFC9",
 ];
 
 const categoryIcons = {
@@ -54,7 +39,7 @@ const categoryIcons = {
   paises: "earth-outline",
   general: "help-circle-outline",
   jugadores: "people-outline",
-  equipos: "shield-outline", // Cambiado para fútbol
+  equipos: "basket-outline",
   peliculas: "videocam-outline",
   actores: "person-outline",
   series: "tv-outline",
@@ -172,7 +157,7 @@ export default function OfflineSetupScreen({ navigation }) {
   const handleSavePlayer = () => {
     const trimmed = name.trim();
     if (!trimmed) {
-        Alert.alert("Falta de respeto", "El jugador necesita un nombre para la camiseta.");
+        Alert.alert("Atención", "El nombre del jugador no puede estar vacío.");
         return;
     }
 
@@ -184,7 +169,7 @@ export default function OfflineSetupScreen({ navigation }) {
     updatePlayers((prev = []) => {
       if (editingPlayerId) {
          if (prev.some((p) => p.name === trimmed && p.id !== editingPlayerId)) {
-            Alert.alert("Nombre ocupado", "Ya hay un jugador con ese nombre en la plantilla.");
+            Alert.alert("Nombre ocupado", "Ya existe otro jugador con ese nombre.");
             return prev;
          }
          return prev.map(p => 
@@ -194,7 +179,7 @@ export default function OfflineSetupScreen({ navigation }) {
          );
       } else {
          if (prev.some((p) => p.name === trimmed)) {
-            Alert.alert("Jugador existente", "Ese jugador ya fue convocado.");
+            Alert.alert("Jugador existente", "Ya existe un jugador con ese nombre.");
             return prev;
          }
          const newPlayer = { id: Date.now().toString(), name: trimmed, color: colorToUse };
@@ -230,12 +215,12 @@ export default function OfflineSetupScreen({ navigation }) {
 
   const startOfflineGame = () => {
     if (safePlayers.length < 3) {
-      Alert.alert("Cancha vacía", "Se necesitan al menos 3 jugadores para el pitazo inicial.");
+      Alert.alert("Faltan Jugadores", "Se necesitan al menos 3 jugadores para comenzar.");
       return;
     }
     
     if (isImpostorOptionDisabled(impostors)) {
-         Alert.alert("Desequilibrio", `Para jugar con ${impostors} simuladores, necesitas al menos ${getMinPlayersForImpostors(impostors)} jugadores.`);
+         Alert.alert("Desequilibrio", `Para jugar con ${impostors} impostores, necesitas al menos ${getMinPlayersForImpostors(impostors)} jugadores.`);
          return;
     }
 
@@ -246,7 +231,7 @@ export default function OfflineSetupScreen({ navigation }) {
     const fallbackWord =
       defaultWords?.[category]?.[subCategory]?.[
         Math.floor(Math.random() * ((defaultWords?.[category]?.[subCategory]?.length) || 1))
-      ] || "Balón de Oro";
+      ] || "Palabra";
 
     navigation.navigate("WordReveal", {
       word: result?.word || fallbackWord,
@@ -255,7 +240,7 @@ export default function OfflineSetupScreen({ navigation }) {
       impostorIds: result?.impostorIds,
       impostors,
       hintsEnabled,
-      hint: result?.hint || "Sin VAR disponible",
+      hint: result?.hint || "Sin pista disponible",
     });
   };
 
@@ -265,9 +250,9 @@ export default function OfflineSetupScreen({ navigation }) {
       onPress={onPress}
     >
       <Ionicons
-        name={categoryIcons[item] || "trophy-outline"}
+        name={categoryIcons[item] || "help-outline"}
         size={36}
-        color={selected ? "#1B5E20" : "#fff"} // Icono verde oscuro si seleccionado
+        color={selected ? styles.categoryBoxTextSelected.color : styles.categoryBoxText.color}
       />
       <Text style={[styles.categoryBoxText, selected && styles.categoryBoxTextSelected]}>
         {item.toUpperCase()}
@@ -279,33 +264,30 @@ export default function OfflineSetupScreen({ navigation }) {
   const hasSubcategories = subCategories.length > 1;
 
   return (
-    // CAMBIO: Fondo Degradado Verde (Césped)
-    <LinearGradient colors={["#66BB6A", "#388E3C", "#1B5E20"]} style={styles.container}>
+    <LinearGradient colors={["#5a0670", "#0a1f44", "#38206d"]} style={styles.container}>
       
       <FlatList
         data={showPlayerList ? safePlayers : []} 
         keyExtractor={(item) => item.id}
+        // Importante: contentContainerStyle con flexGrow para centrar el footer si falta contenido
         contentContainerStyle={{ flexGrow: 1, paddingBottom: 20 }}
         
         ListHeaderComponent={
           <View>
-            <Text style={styles.title}>PREVIA DEL PARTIDO 📋</Text>
+            <Text style={styles.title}>CONFIGURACIÓN DE LA PARTIDA</Text>
 
-            {/* Botón Agregar Jugador (Estilo Pizarra) */}
+            {/* Formulario Agregar */}
             <TouchableOpacity
-                style={[styles.accordionButton, { backgroundColor: "#fff" }]}
-                onPress={() => {
-                  toggleAddPlayerForm();
-                  playSound("click");
-                }}
+                style={[styles.accordionButton, { backgroundColor: "#FFD700" }]}
+                onPress={toggleAddPlayerForm}
             >
                 <Ionicons 
-                    name={showAddPlayerForm ? "chevron-up" : "shirt-outline"} 
+                    name={showAddPlayerForm ? "chevron-up" : "person-add-outline"} 
                     size={24} 
-                    color="#2E7D32" 
+                    color="#333" 
                 />
-                <Text style={[styles.accordionButtonText, {color: "#2E7D32"}]}>
-                    {editingPlayerId ? "Editar Ficha" : "Convocar Jugador"}
+                <Text style={styles.accordionButtonText}>
+                    {editingPlayerId ? "Editar Jugador" : "Agregar Jugador"}
                 </Text>
             </TouchableOpacity>
 
@@ -313,21 +295,18 @@ export default function OfflineSetupScreen({ navigation }) {
                 <View style={[styles.card, editingPlayerId && styles.cardEditing]}>
                     <TextInput
                     style={styles.input}
-                    placeholder={editingPlayerId ? "Nuevo nombre..." : "Nombre en camiseta..."}
-                    placeholderTextColor="rgba(255,255,255,0.6)"
+                    placeholder={editingPlayerId ? "Nuevo nombre..." : "Nombre del jugador..."}
+                    placeholderTextColor="rgba(255,255,255,0.7)"
                     value={name}
                     onChangeText={setName}
                     returnKeyType="done"
                     />
                     <TouchableOpacity
                     style={styles.colorPickerHeader}
-                    onPress={() => {
-                      playSound("click");
-                      setShowColors(!showColors);
-                    }}
+                    onPress={() => setShowColors(!showColors)}
                     >
-                    <Text style={styles.subtitle}>Color del Kit</Text>
-                    <View style={[styles.colorPreview, { backgroundColor: selectedColor || "#fff" }]} />
+                    <Text style={styles.subtitle}>Color</Text>
+                    <View style={[styles.colorPreview, { backgroundColor: selectedColor || "#FFF06B" }]} />
                     <Ionicons name={showColors ? "chevron-up" : "chevron-down"} color="#fff" size={20} />
                     </TouchableOpacity>
                     {showColors && (
@@ -335,17 +314,14 @@ export default function OfflineSetupScreen({ navigation }) {
                         {(availableColors.length ? availableColors : crewColors).map((color) => (
                         <TouchableOpacity
                             key={color}
-                            onPress={() => {
-                              playSound("click");
-                              setSelectedColor(color);
-                            }}
+                            onPress={() => setSelectedColor(color)}
                             style={[
                             styles.colorOption,
                             {
                                 backgroundColor: color,
                                 transform: [{ scale: selectedColor === color ? 1.15 : 1 }],
-                                borderWidth: selectedColor === color ? 3 : 1,
-                                borderColor: selectedColor === color ? "#FFD700" : "rgba(0,0,0,0.2)"
+                                borderWidth: selectedColor === color ? 4 : 0,
+                                borderColor: "#fff"
                             },
                             ]}
                         />
@@ -359,7 +335,7 @@ export default function OfflineSetupScreen({ navigation }) {
                         style={[styles.actionButton, !name.trim() && styles.disabledButton, {flex: 1}]}
                         >
                         <Text style={styles.actionButtonText}>
-                            {editingPlayerId ? "Actualizar Ficha" : "Confirmar Fichaje"}
+                            {editingPlayerId ? "Guardar" : "Agregar"}
                         </Text>
                         </TouchableOpacity>
                         {editingPlayerId && (
@@ -371,17 +347,14 @@ export default function OfflineSetupScreen({ navigation }) {
                 </View>
             )}
 
-            {/* Botón Lista Plantilla */}
+            {/* Botón Lista */}
             <TouchableOpacity
-                style={[styles.accordionButton, { backgroundColor: "rgba(0,0,0,0.5)", marginBottom: 20, borderWidth: 2, borderColor: '#fff' }]}
-                onPress={() => {
-                  playSound("click");
-                  togglePlayerList();
-                }}
+                style={[styles.accordionButton, { backgroundColor: "#8AFF70", marginBottom: 20 }]}
+                onPress={togglePlayerList}
             >
-                <Ionicons name={showPlayerList ? "chevron-up" : "list-outline"} size={24} color="#fff" />
-                <Text style={[styles.accordionButtonText, {color: '#fff'}]}>
-                Plantilla Titular ({safePlayers.length})
+                <Ionicons name={showPlayerList ? "chevron-up" : "people-outline"} size={24} color="#333" />
+                <Text style={styles.accordionButtonText}>
+                Lista de Jugadores ({safePlayers.length})
                 </Text>
             </TouchableOpacity>
           </View>
@@ -392,56 +365,45 @@ export default function OfflineSetupScreen({ navigation }) {
              return (
                 <View style={[styles.playerCard, isEditingThis && styles.playerCardEditing]}>
                     <View style={{ flexDirection: "row", alignItems: "center" }}>
-                    <View style={[styles.colorDot, { backgroundColor: item.color }]}>
-                        <Ionicons name="shirt" size={18} color="rgba(0,0,0,0.5)" style={{alignSelf:'center', marginTop:4}} />
-                    </View>
+                    <View style={[styles.colorDot, { backgroundColor: item.color }]} />
                     <Text style={styles.playerText}>{item.name}</Text>
                     </View>
                     <View style={{flexDirection: 'row', gap: 15}}>
-                        <TouchableOpacity onPress={() => { playSound("click");
-                                                          startEditing(item)}}>
-                            <Ionicons name="create-outline" size={22} color="#FFEB3B" />
+                        <TouchableOpacity onPress={() => startEditing(item)}>
+                            <Ionicons name="pencil" size={22} color="#FFF06B" />
                         </TouchableOpacity>
-                        <TouchableOpacity onPress={() => {
-                          playSound("click");
-                          removePlayer(item.id);
-                        }}>
-                            {/* Icono de Tarjeta Roja */}
-                            <View style={styles.redCardIcon}>
-                                <View style={{width:12, height:16, backgroundColor:'#D32F2F', borderRadius: 2}}/>
-                            </View>
+                        <TouchableOpacity onPress={() => removePlayer(item.id)}>
+                            <Ionicons name="trash-outline" size={22} color="#FF6B6B" />
                         </TouchableOpacity>
                     </View>
                 </View>
              );
         }}
 
+        // Footer con estilo flex: 1 y justifyContent center para centrar verticalmente
         ListFooterComponentStyle={{ flex: 1, justifyContent: 'center' }}
         ListFooterComponent={
           <View style={styles.menuContainer}>
-            {/* Configuración - Estilo Marcador */}
+            {/* Configuración */}
             <TouchableOpacity
-                style={[styles.menuButton, { backgroundColor: "#fff" }]}
+                style={[styles.menuButton, { backgroundColor: "#70C2FF" }]}
                 onPress={() => setShowCategoryModal(true)}
             >
-                <Ionicons name="trophy" size={24} color="#1B5E20" />
+                <Ionicons name="albums-outline" size={24} color="#333" />
                 <View style={{alignItems: 'flex-start'}}>
-                    <Text style={styles.menuLabel}>Torneo / Copa</Text>
-                    <Text style={[styles.menuValue, {color: '#1B5E20'}]}>{category.toUpperCase()}</Text>
+                    <Text style={styles.menuLabel}>Categoría</Text>
+                    <Text style={styles.menuValue}>{category.toUpperCase()}</Text>
                 </View>
             </TouchableOpacity>
 
             {hasSubcategories && (
                 <TouchableOpacity
-                style={[styles.menuButton, { backgroundColor: "#FFEB3B" }]}
-                onPress={() => {
-                  playSound("click");
-                  setShowSubCategoryModal(true);
-                }}
+                style={[styles.menuButton, { backgroundColor: "#FFD700" }]}
+                onPress={() => setShowSubCategoryModal(true)}
                 >
-                <Ionicons name="filter-outline" size={24} color="#333" />
+                <Ionicons name="layers-outline" size={24} color="#333" />
                 <View style={{alignItems: 'flex-start'}}>
-                    <Text style={styles.menuLabel}>División</Text>
+                    <Text style={styles.menuLabel}>Subcategoría</Text>
                     <Text style={styles.menuValue}>{subCategory.toUpperCase()}</Text>
                 </View>
                 </TouchableOpacity>
@@ -449,30 +411,24 @@ export default function OfflineSetupScreen({ navigation }) {
 
             <View style={{flexDirection: 'row', gap: 10}}>
                 <TouchableOpacity
-                    style={[styles.menuButton, { backgroundColor: "#212121", flex: 1 }]} // Estilo Árbitro
-                    onPress={() => {
-                      playSound("click");
-                      setShowImpostorModal(true);
-                    }}
+                    style={[styles.menuButton, { backgroundColor: "#FF6B6B", flex: 1 }]}
+                    onPress={() => setShowImpostorModal(true)}
                 >
-                    <Ionicons name="walk-outline" size={24} color="#fff" />
+                    <Ionicons name="skull-outline" size={24} color="#333" />
                     <View>
-                        <Text style={[styles.menuLabel, {color: '#ccc'}]}>Simuladores</Text>
-                        <Text style={[styles.menuValue, {color: '#fff'}]}>{impostors}</Text>
+                        <Text style={styles.menuLabel}>Impostores</Text>
+                        <Text style={styles.menuValue}>{impostors}</Text>
                     </View>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                    style={[styles.menuButton, { backgroundColor: hintsEnabled ? "#4CAF50" : "#9E9E9E", flex: 1 }]}
-                    onPress={() => {
-                      playSound("click");
-                      setHintsEnabled(!hintsEnabled);
-                    }}
+                    style={[styles.menuButton, { backgroundColor: hintsEnabled ? "#FFF06B" : "#A3A3A3", flex: 1 }]}
+                    onPress={() => setHintsEnabled(!hintsEnabled)}
                 >
-                    <Ionicons name="videocam-outline" size={24} color="#fff" />
+                    <Ionicons name="bulb-outline" size={24} color="#333" />
                     <View>
-                        <Text style={[styles.menuLabel, {color: '#eee'}]}>VAR (Ayuda)</Text>
-                        <Text style={[styles.menuValue, {color: '#fff'}]}>{hintsEnabled ? "ACTIVO" : "OFF"}</Text>
+                        <Text style={styles.menuLabel}>Pistas</Text>
+                        <Text style={styles.menuValue}>{hintsEnabled ? "ON" : "OFF"}</Text>
                     </View>
                 </TouchableOpacity>
             </View>
@@ -480,27 +436,24 @@ export default function OfflineSetupScreen({ navigation }) {
         }
       />
 
-      {/* --- Dock Inferior (Botón de Inicio) --- */}
+      {/* --- Dock Inferior Fijo --- */}
       <View style={styles.bottomDock}>
           <TouchableOpacity 
             style={[styles.startButton, safePlayers.length < 3 && styles.disabledButton]} 
-            onPress={() => {
-              playSound("click");
-              startOfflineGame();
-            }}
+            onPress={startOfflineGame}
             activeOpacity={0.8}
           >
-            <Text style={styles.startText}>PITAZO INICIAL</Text>
+            <Text style={styles.startText}>INICIAR PARTIDA</Text>
           </TouchableOpacity>
       </View>
 
-      {/* --- MODAL SIMULADORES (Estilo Pizarra Táctica Oscura) --- */}
+      {/* --- MODALES (Sin cambios funcionales, solo visuales sin emojis) --- */}
       <Modal visible={showImpostorModal} transparent animationType="fade">
         <View style={styles.overlay}>
           <View style={styles.modalContentImpostors}>
-            <Text style={styles.modalTitle}>¿Cuántos simulan?</Text>
+            <Text style={styles.modalTitle}>Cantidad de Impostores</Text>
             <Text style={styles.modalSubtitle}>
-                  Plantilla Total: {safePlayers.length}
+                 Total Jugadores: {safePlayers.length}
             </Text>
             
             <View style={styles.impostorOptionsContainer}>
@@ -517,54 +470,50 @@ export default function OfflineSetupScreen({ navigation }) {
                     ]}
                     onPress={() => {
                       if (!disabled) setImpostors(num);
-                      else Alert.alert("Reglamento", `Necesitas al menos ${getMinPlayersForImpostors(num)} jugadores.`);
+                      else Alert.alert("Aviso", `Necesitas al menos ${getMinPlayersForImpostors(num)} jugadores.`);
                     }}
                     activeOpacity={disabled ? 1 : 0.7}
                   >
-                      <View style={styles.impostorHeader}>
-                          {/* Iconos de tarjetas para representar cantidad */}
-                          <View style={{flexDirection:'row'}}>
-                            {Array.from({length: num}).map((_, i) => (
-                                <View key={i} style={{width:15, height:22, backgroundColor: impostors === num ? '#D32F2F' : '#555', marginRight:2, borderRadius:2}} />
-                            ))}
-                          </View>
-                          <Text style={[
+                     <View style={styles.impostorHeader}>
+                         <Ionicons
+                            name={impostors === num ? "skull" : "skull-outline"}
+                            size={32}
+                            color={disabled ? "#666" : (impostors === num ? "#fff" : "#333")}
+                         />
+                         <Text style={[
                              styles.impostorNumber, 
                              impostors === num && {color: '#fff'},
                              disabled && {color: '#666'}
-                          ]}>
+                         ]}>
                              {num}
-                          </Text>
-                      </View>
-                      {!disabled ? (
-                          <View style={styles.versusContainer}>
+                         </Text>
+                     </View>
+                     {!disabled ? (
+                         <View style={styles.versusContainer}>
                              <Text style={[styles.versusText, impostors === num && {color: '#eee'}]}>
-                                 VS {crewCount} Honestos
+                                 VS {crewCount} Tripulantes
                              </Text>
-                          </View>
-                      ) : (
-                          <Text style={styles.minReqText}>Min {getMinPlayersForImpostors(num)} jugs.</Text>
-                      )}
+                         </View>
+                     ) : (
+                         <Text style={styles.minReqText}>Min {getMinPlayersForImpostors(num)} Jugs.</Text>
+                     )}
                   </TouchableOpacity>
                 );
               })}
             </View>
 
-            <TouchableOpacity style={styles.confirmButton} onPress={() => {
-              playSound("click");
-              setShowImpostorModal(false);
-            }}>
+            <TouchableOpacity style={styles.confirmButton} onPress={() => setShowImpostorModal(false)}>
               <Text style={styles.confirmText}>CONFIRMAR</Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
 
-      {/* --- Modal Categoría (Estilo Copa) --- */}
+      {/* Modal Categoría */}
       <Modal visible={showCategoryModal} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Elige la Copa</Text>
+            <Text style={styles.modalTitle}>Categorías</Text>
             <FlatList
               numColumns={2}
               data={categories}
@@ -577,10 +526,7 @@ export default function OfflineSetupScreen({ navigation }) {
                 }, category === item)
               }
             />
-            <TouchableOpacity style={styles.closeModalButton} onPress={() => 
-              {
-                playSound("click");
-              setShowCategoryModal(false)}}>
+            <TouchableOpacity style={styles.closeModalButton} onPress={() => setShowCategoryModal(false)}>
               <Text style={styles.closeModalText}>CERRAR</Text>
             </TouchableOpacity>
           </View>
@@ -591,7 +537,7 @@ export default function OfflineSetupScreen({ navigation }) {
       <Modal visible={showSubCategoryModal} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Elige División</Text>
+            <Text style={styles.modalTitle}>Subcategorías</Text>
             <FlatList
               numColumns={2}
               data={subCategories}
@@ -603,10 +549,7 @@ export default function OfflineSetupScreen({ navigation }) {
                 }, subCategory === item)
               }
             />
-            <TouchableOpacity style={styles.closeModalButton} onPress={() => {
-              playSound("click");
-              setShowSubCategoryModal(false);
-            }}>
+            <TouchableOpacity style={styles.closeModalButton} onPress={() => setShowSubCategoryModal(false)}>
               <Text style={styles.closeModalText}>CERRAR</Text>
             </TouchableOpacity>
           </View>
@@ -619,66 +562,64 @@ export default function OfflineSetupScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1, paddingTop: 50 },
   title: {
-    fontSize: 32, 
+    fontSize: 38, 
     fontWeight: "900",
-    color: "#fff", 
+    color: "#FFD700", 
     textAlign: "center",
     marginBottom: 20,
-    textShadowColor: "rgba(0,0,0,0.5)",
-    textShadowOffset: { width: 2, height: 2 },
-    textShadowRadius: 4,
+    textShadowColor: "rgba(0,0,0,0.6)",
+    textShadowOffset: { width: 3, height: 3 },
+    textShadowRadius: 6,
     fontFamily: "LuckiestGuy_400Regular",
-    letterSpacing: 1,
   },
   
-  // --- Botones Acordeón (Pizarra) ---
+  // --- Botones Acordeón (Agregar / Lista) ---
   accordionButton: {
-    flexDirection: 'row',
     alignItems: "center",
     justifyContent: "center", 
-    gap: 10,
     paddingHorizontal: 20,
     marginHorizontal: 20,
-    borderRadius: 10, // Menos redondeado para parecer botón físico
+    borderRadius: 22, 
     paddingVertical: 14,
     marginTop: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
   },
   accordionButtonText: { 
     fontSize: 18, 
+    color: "#333", 
     fontWeight: "800",
-    textTransform: "uppercase",
-    fontFamily: "LuckiestGuy_400Regular",
   },
 
-  // --- Formulario (Ficha Técnica) ---
+  // --- Formulario ---
   card: {
     marginHorizontal: 20,
-    backgroundColor: "rgba(0,0,0,0.3)", // Oscuro transparente
-    borderRadius: 15, 
+    backgroundColor: "rgba(255,255,255,0.15)", 
+    borderRadius: 25, 
     padding: 20,
     marginTop: 10, 
-    borderWidth: 2,
-    borderColor: '#fff', // Línea de cal
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
   },
   cardEditing: {
-      borderColor: "#FFEB3B", 
-      backgroundColor: "rgba(0,0,0,0.6)",
+      borderColor: "#FFD700", 
+      borderWidth: 3,
+      backgroundColor: "rgba(255, 215, 0, 0.2)",
   },
   input: {
-    backgroundColor: "#fff", 
+    backgroundColor: "rgba(0,0,0,0.3)", 
     borderWidth: 2,
-    borderColor: "#ddd", 
+    borderColor: "#FFF06B", 
     padding: 15,
-    borderRadius: 10, 
+    borderRadius: 18, 
     fontSize: 18,
-    color: "#333",
+    color: "#fff",
     textAlign: "center",
-    fontFamily: "LuckiestGuy_400Regular",
   },
   subtitle: { 
     fontSize: 16, 
@@ -690,118 +631,107 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.2)", 
-    borderRadius: 10,
+    backgroundColor: "rgba(112, 194, 255, 0.3)", 
+    borderRadius: 15,
     marginTop: 15,
     padding: 10,
   },
-  colorPreview: { width: 30, height: 30, borderRadius: 4, borderWidth: 2, borderColor: "#fff", marginRight: 10 },
+  colorPreview: { width: 30, height: 30, borderRadius: 10, borderWidth: 3, borderColor: "#fff", marginRight: 10 },
   colorGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "center",
     marginVertical: 15,
   },
-  colorOption: { width: 40, height: 40, borderRadius: 5, margin: 6 }, // Cuadrados estilo tela
+  colorOption: { width: 45, height: 45, borderRadius: 14, margin: 6 }, 
   
-  // Botones Acción
+  // Botones Acción Formulario
   actionButton: {
-    backgroundColor: "#FFEB3B", // Amarillo intenso
+    backgroundColor: "#8AFF70", 
     paddingVertical: 16,
-    borderRadius: 10,
+    borderRadius: 22,
     alignItems: "center",
-    borderBottomWidth: 4,
-    borderBottomColor: "#FBC02D"
   },
   cancelButton: {
-      backgroundColor: "#D32F2F", 
+      backgroundColor: "#FF6B6B", 
       paddingVertical: 14,
       paddingHorizontal: 18,
-      borderRadius: 10,
+      borderRadius: 22,
       alignItems: "center",
       justifyContent: 'center',
-      borderBottomWidth: 4,
-      borderBottomColor: "#B71C1C"
   },
   actionButtonText: { 
     fontSize: 18, 
+    fontWeight: "900", 
     color: "#333", 
-    fontFamily: "LuckiestGuy_400Regular",
   },
   
-  // Lista Jugadores (Alineación)
+  // Lista Jugadores
   playerCard: {
     marginHorizontal: 20,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "#fff", // Fondo blanco como lista de papel
-    borderRadius: 8,
-    padding: 12,
+    backgroundColor: "rgba(255,255,255,0.1)", 
+    borderRadius: 18,
+    padding: 14,
     marginVertical: 5,
     borderWidth: 1,
-    borderColor: '#ccc',
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    borderColor: 'rgba(255,255,255,0.15)',
   },
   playerCardEditing: {
-      borderColor: "#FFEB3B", 
-      borderWidth: 3,
+      borderColor: "#FFF06B", 
+      borderWidth: 2,
+      backgroundColor: "rgba(255, 240, 107, 0.1)",
   },
-  colorDot: { width: 32, height: 32, borderRadius: 5, marginRight: 12, borderWidth: 1, borderColor: '#ddd' },
+  colorDot: { width: 32, height: 32, borderRadius: 12, marginRight: 12, borderWidth: 2, borderColor: '#fff' },
   playerText: { 
     fontSize: 18, 
-    color: "#333", 
-    fontFamily: "LuckiestGuy_400Regular",
+    color: "#fff", 
+    fontWeight: "700",
   },
-  redCardIcon: {
-      padding: 4,
-  },
-
-  // --- MENÚ CENTRAL ---
+  
+  // --- MENÚ CENTRAL (FOOTER) ---
   menuContainer: {
       marginHorizontal: 20,
       gap: 10,
   },
   menuButton: {
-      borderRadius: 12,
+      borderRadius: 22,
       paddingVertical: 15,
       paddingHorizontal: 20,
       flexDirection: 'row',
       alignItems: 'center',
       gap: 15,
       shadowColor: "#000",
-      shadowOffset: { width: 0, height: 2 },
+      shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.2,
-      shadowRadius: 3,
-      elevation: 3,
+      shadowRadius: 4,
+      elevation: 5,
   },
   menuLabel: {
       fontSize: 12,
+      color: "#333",
       fontWeight: "600",
       textTransform: "uppercase",
-      opacity: 0.8
+      opacity: 0.7
   },
   menuValue: {
       fontSize: 18,
+      color: "#333",
       fontWeight: "900",
-      fontFamily: "LuckiestGuy_400Regular",
   },
 
-  // --- DOCK INFERIOR ---
+  // --- DOCK INFERIOR FIJO ---
   bottomDock: {
       padding: 20,
-      paddingBottom: 30, 
-      backgroundColor: "#1B5E20", // Verde muy oscuro
+      paddingBottom: 30, // Espacio extra para iPhones con home bar
+      backgroundColor: "rgba(0,0,0,0.2)",
       borderTopLeftRadius: 25,
       borderTopRightRadius: 25,
-      borderTopWidth: 4,
-      borderTopColor: '#fff', // Línea de fondo
   },
   startButton: {
-    backgroundColor: "#fff", // Balón blanco
+    backgroundColor: "#FF6B6B", 
     borderRadius: 30, 
     paddingVertical: 20,
     alignItems: 'center',
@@ -810,65 +740,67 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
-    borderWidth: 4,
-    borderColor: '#333' // Cuero negro clásico
   },
   startText: { 
     fontSize: 24, 
-    color: "#333", 
-    fontFamily: "LuckiestGuy_400Regular",
+    fontWeight: "900", 
+    color: "#fff", 
+    letterSpacing: 1,
   },
-  disabledButton: { opacity: 0.5, backgroundColor: '#ccc', borderColor: '#999' },
+  disabledButton: { opacity: 0.5 },
 
-  // --- MODAL SIMULADORES ---
-  overlay: {
+  // --- ESTILOS MODAL IMPOSTORES ---
+  modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.8)", 
+    backgroundColor: "rgba(0,0,0,0.9)", 
     justifyContent: "center",
     alignItems: "center",
   },
   modalContentImpostors: {
-    backgroundColor: "#212121", // Vestuario oscuro
-    borderRadius: 20,
+    backgroundColor: "#222", 
+    borderRadius: 30,
     padding: 25,
-    width: "90%",
+    width: "100%",
+    height: "80%",
+    justifyContent: 'center',
+    alignItems: 'center',
+    top: '20%',
     borderWidth: 2,
-    borderColor: "#fff",
+    borderColor: "#FF6B6B",
   },
   modalTitle: {
     fontSize: 26,
+    fontWeight: "900",
     color: "#fff",
     textAlign: "center",
     marginBottom: 5,
-    fontFamily: "LuckiestGuy_400Regular",
   },
   modalSubtitle: {
       fontSize: 16,
       color: "#aaa",
       marginBottom: 20,
-      textAlign: 'center'
   },
   impostorOptionsContainer: {
       width: '100%',
       gap: 15,
   },
   impostorCard: {
-      backgroundColor: "#333",
+      backgroundColor: "#eee",
       padding: 15,
-      borderRadius: 10,
+      borderRadius: 18,
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      borderWidth: 2,
-      borderColor: '#444',
+      borderWidth: 4,
+      borderColor: 'transparent',
   },
   impostorCardSelected: {
-      backgroundColor: "#424242",
-      borderColor: "#F44336", // Borde Rojo Tarjeta
+      backgroundColor: "#FF6B6B",
+      borderColor: "#fff",
   },
   impostorCardDisabled: {
-      backgroundColor: "#222",
-      opacity: 0.5,
+      backgroundColor: "#444",
+      opacity: 0.6,
   },
   impostorHeader: {
       flexDirection: 'row',
@@ -878,88 +810,79 @@ const styles = StyleSheet.create({
   impostorNumber: {
       fontSize: 28,
       fontWeight: '900',
-      color: '#ccc',
-      fontFamily: "LuckiestGuy_400Regular",
+      color: '#333',
   },
   versusContainer: {
-      backgroundColor: 'rgba(255,255,255,0.05)',
+      backgroundColor: 'rgba(0,0,0,0.1)',
       paddingHorizontal: 10,
       paddingVertical: 5,
-      borderRadius: 5,
+      borderRadius: 10,
   },
   versusText: {
       fontSize: 14,
       fontWeight: '700',
-      color: '#888',
+      color: '#555',
   },
   minReqText: {
       fontSize: 12,
-      color: '#777',
+      color: '#aaa',
       fontStyle: 'italic',
   },
   confirmButton: {
       marginTop: 25,
-      backgroundColor: "#4CAF50",
+      backgroundColor: "#8AFF70",
       paddingVertical: 14,
-      borderRadius: 10,
-      alignItems: 'center'
+      paddingHorizontal: 40,
+      borderRadius: 25,
   },
   confirmText: {
       fontSize: 18,
-      color: "#fff",
-      fontFamily: "LuckiestGuy_400Regular",
+      fontWeight: "900",
+      color: "#333",
   },
 
-  // --- Modal Categoría ---
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.85)", 
-    justifyContent: "center",
-    alignItems: "center",
-  },
+  // Estilos Modal Categoría
   modalContent: {
-    backgroundColor: "#1B5E20", // Verde oscuro
-    borderRadius: 20, 
+    backgroundColor: "#2A0A57", 
+    borderRadius: 30, 
     padding: 20,
     width: "90%",
     height: "70%",
-    borderWidth: 3,
-    borderColor: "#fff",
+    borderWidth: 2,
+    borderColor: "#FFD700",
   },
   categoryBox: {
     flex: 1,
     margin: 6, 
-    backgroundColor: "rgba(255,255,255,0.1)", 
-    borderRadius: 12,
+    backgroundColor: "#4A067F", 
+    borderRadius: 18,
     justifyContent: "center",
     alignItems: "center",
     paddingVertical: 15,
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
   },
   categoryBoxSelected: { 
-    backgroundColor: "#fff", 
-    borderColor: "#FFEB3B",
+    backgroundColor: "#FFD700", 
+    borderWidth: 2,
+    borderColor: "#fff",
   },
   categoryBoxText: { 
     fontSize: 14, 
+    fontWeight: "800", 
     marginTop: 8, 
     color: "#fff",
-    textAlign: 'center',
-    fontFamily: "LuckiestGuy_400Regular",
+    textAlign: 'center'
   },
-  categoryBoxTextSelected: { color: "#1B5E20" },
+  categoryBoxTextSelected: { color: "#333" },
   closeModalButton: {
     marginTop: 15,
     alignSelf: "center",
-    padding: 10,
-    backgroundColor: '#2E7D32',
-    borderRadius: 20,
-    paddingHorizontal: 30
+    padding: 10
   },  
   closeModalText: {
     fontSize: 16,
-    color: "#fff",
-    fontFamily: "LuckiestGuy_400Regular",
+    color: "#FFD700",
+    fontWeight: "700",
   },
 });

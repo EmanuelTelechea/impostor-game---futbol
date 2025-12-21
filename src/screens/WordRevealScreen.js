@@ -9,27 +9,32 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
 import { GameContext } from "../context/GameContext";
-import { playSound } from "../utils/soundManager";
 
 // ----------------------------------------------------
-// FUNCIÓN DE AJUSTE DINÁMICO DEL TAMAÑO DE FUENTE (JUGADA)
+// FUNCIÓN DE AJUSTE DINÁMICO DEL TAMAÑO DE FUENTE (PALABRAS)
 // ----------------------------------------------------
 const getFontSizeForWord = (word) => {
-  if (!word) return 55;
+  if (!word) return 55; // Tamaño por defecto si no hay palabra
   const length = word.length;
+  
+  // Define un tamaño máximo y un tamaño mínimo
   const MAX_FONT_SIZE = 55;
   const MIN_FONT_SIZE = 30;
+  
+  // Ajuste basado en la longitud (se puede afinar con pruebas)
   let size = MAX_FONT_SIZE - (length * 1.5); 
+  
+  // Palabras muy largas requieren un ajuste más fuerte
   if (length > 15) {
     size = MAX_FONT_SIZE - (length * 2.5); 
   }
+
   return Math.max(MIN_FONT_SIZE, Math.floor(size));
 };
 
@@ -37,14 +42,20 @@ const getFontSizeForWord = (word) => {
 // FUNCIÓN DE AJUSTE DINÁMICO DEL TAMAÑO DE FUENTE (NOMBRES)
 // ----------------------------------------------------
 const getFontSizeForName = (name) => {
-    if (!name) return 60; 
+    if (!name) return 60; // Tamaño por defecto
     const length = name.length;
+
+    // Define un tamaño máximo y un tamaño mínimo
     const MAX_FONT_SIZE = 60;
     const MIN_FONT_SIZE = 35;
+    
+    // Ajuste más agresivo para nombres, ya que se centran en un área más pequeña.
     let size = MAX_FONT_SIZE - (length * 2); 
+    
     if (length > 12) {
         size = MAX_FONT_SIZE - (length * 3);
     }
+
     return Math.max(MIN_FONT_SIZE, Math.floor(size));
 };
 
@@ -72,7 +83,7 @@ export default function WordRevealScreen({ navigation }) {
   const paramSubCategory = params.subCategory ?? null;
   const paramImpostorIds = params.impostorIds ?? [];
   const hintsEnabled = params.hintsEnabled ?? false;
-  const displayHint = params.hint ?? "VAR no disponible";
+  const displayHint = params.hint ?? "Pista no disponible";
   const [category, setCategory] = useState(paramCategory || null);
   const [subCategory, setSubCategory] = useState(paramSubCategory || null);
   const [index, setIndex] = useState(0);
@@ -95,13 +106,13 @@ export default function WordRevealScreen({ navigation }) {
 
   useEffect(() => {
     if (paramWord && paramImpostorIds.length > 0) {
-      console.log("🔄 Sincronizando Táctica:", paramImpostorIds);
+      console.log("🔄 Sincronizando Contexto con Parametros:", paramImpostorIds);
       setContextWord(paramWord);
       setContextImpostorIds(paramImpostorIds);
       if (displayHint) setContextHint(displayHint);
     }
     else if (!paramWord && players.length > 0) {
-      console.log("⚠️ Balón perdido, reiniciando partido...");
+      console.log("⚠️ Datos perdidos, reiniciando lógica interna...");
       startGame(null, paramCategory, paramSubCategory);
     }
   }, [paramWord, paramImpostorIds, setContextWord, setContextImpostorIds, displayHint, players.length, startGame, paramCategory, paramSubCategory, setContextHint]);
@@ -111,7 +122,6 @@ export default function WordRevealScreen({ navigation }) {
     const newValue = revealed ? 0 : 180;
     flip.value = withTiming(newValue, { duration: 600 });
     setRevealed(!revealed);
-    playSound('giro');
   };
 
   const next = () => {
@@ -130,40 +140,41 @@ export default function WordRevealScreen({ navigation }) {
     }
   };
 
-  if (!fontsLoaded) return <ActivityIndicator size="large" color="#FFF" />;
+  if (!fontsLoaded) return <ActivityIndicator size="large" color="#FFD93D" />;
+
+  // ESTADO 1, 2, 3: Lógica de selección de jugadores/categorías (sin cambios significativos)
 
   // ESTADO 1: No hay jugadores
   if (!Array.isArray(players) || players.length === 0) {
     return (
-      <LinearGradient colors={["#1B5E20", "#2E7D32", "#66BB6A"]} style={styles.container}>
-        <Text style={[styles.title, { marginBottom: 30, color: '#FFF' }]}>Vestuario Vacío</Text>
+      <LinearGradient colors={["#2E0249", "#570A57", "#A91079"]} style={styles.container}>
+        <Text style={[styles.title, { marginBottom: 30, color: '#FFD93D' }]}>No hay jugadores</Text>
         <TouchableOpacity 
-          style={[styles.button, { backgroundColor: '#D32F2F', width: 250 }]}
+          style={[styles.button, { backgroundColor: '#FF595E', width: 250 }]}
           onPress={() => navigation.navigate("OfflineSetup")}
         >
-          <Text style={styles.buttonText}>Fichar Jugadores</Text>
+          <Text style={styles.buttonText}>Configurar Jugadores</Text>
         </TouchableOpacity>
       </LinearGradient>
     );
   }
 
-  // ESTADO 2: Elegir Categoría (Copa)
+  // ESTADO 2: Elegir Categoría
   if (!category && !subCategory) {
     return (
-      <LinearGradient colors={["#1B5E20", "#2E7D32", "#66BB6A"]} style={styles.container}>
-        <Text style={[styles.title, { marginBottom: 30, color: '#FFEB3B' }]}>Elige la Copa </Text>
+      <LinearGradient colors={["#16213E", "#0F3460", "#533483"]} style={styles.container}>
+        <Text style={[styles.title, { marginBottom: 30, color: '#B5FF9E' }]}>Elige una categoria</Text>
         <View style={styles.categoryBox}>
           {categories.map((cat) => (
             <TouchableOpacity
               key={cat}
-              style={[styles.button, { backgroundColor: '#FFEB3B' }]}
+              style={[styles.button, { backgroundColor: '#FFD93D' }]}
               onPress={() => {
                 setCategory(cat);
                 if (typeof setGlobalCategory === "function") setGlobalCategory(cat);
-                playSound('click');
               }}
             >
-              <Text style={[styles.buttonText, { color: '#1B5E20' }]}>{cat.toUpperCase()}</Text>
+              <Text style={[styles.buttonText, { color: '#1B263B' }]}>{cat.toUpperCase()}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -171,25 +182,24 @@ export default function WordRevealScreen({ navigation }) {
     );
   }
 
-  // ESTADO 3: Elegir Subcategoría (Liga)
+  // ESTADO 3: Elegir Subcategoría
   if (category && !subCategory) {
     const subs = getSubCategories(category);
     return (
-      <LinearGradient colors={["#1B5E20", "#2E7D32", "#66BB6A"]} style={styles.container}>
-        <Text style={[styles.title, { marginBottom: 10, color: '#FFF' }]}>{category.toUpperCase()}</Text>
-        <Text style={[styles.subtitle, { marginBottom: 30, color: '#FFEB3B' }]}>Elige la División</Text>
+      <LinearGradient colors={["#16213E", "#0F3460", "#533483"]} style={styles.container}>
+        <Text style={[styles.title, { marginBottom: 10, color: '#B5FF9E' }]}>{category.toUpperCase()}</Text>
+        <Text style={[styles.subtitle, { marginBottom: 30, color: '#FFD93D' }]}>Elegi una subcategoria</Text>
         <View style={styles.categoryBox}>
           {subs.map((sub) => (
             <TouchableOpacity
               key={sub}
-              style={[styles.button, { backgroundColor: '#FFEB3B' }]}
+              style={[styles.button, { backgroundColor: '#FFD93D' }]}
               onPress={() => {
                 setSubCategory(sub);
                 startGame(null, category, sub);
-                playSound('click');
               }}
             >
-              <Text style={[styles.buttonText, { color: '#1B5E20' }]}>{sub.toUpperCase()}</Text>
+              <Text style={[styles.buttonText, { color: '#1B263B' }]}>{sub.toUpperCase()}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -197,111 +207,108 @@ export default function WordRevealScreen({ navigation }) {
     );
   }
 
-  // ESTADO 4: Revelación (Carta de Jugador)
+  // ESTADO 4: Revelación de la Palabra
   const player = players[index];
-  if (!player) return <ActivityIndicator size="large" color="#FFF" />;
+  if (!player) return <ActivityIndicator size="large" color="#FFD93D" />;
   const cardColor = player.color || "#FFD93D";
   const isImpostor = paramImpostorIds.includes(player.id);
   
+  // Establecemos el color del borde y el texto al color del jugador.
   const dynamicTextColor = cardColor; 
   const dynamicBorderColor = cardColor; 
   
+  // 1. Cálculo dinámico del tamaño de la fuente para la palabra
   const dynamicWordFontSize = getFontSizeForWord(paramWord); 
+  // 2. Cálculo dinámico del tamaño de la fuente para el nombre
   const dynamicNameFontSize = getFontSizeForName(player.name);
 
+  // 3. Lógica condicional de subcategoría
   const isSubCategoryGeneralOrNull = !subCategory || subCategory.trim().toLowerCase() === "general";
   const displaySubCategoryText = isSubCategoryGeneralOrNull ? "" : subCategory.toUpperCase();
 
 
   return (
-    <LinearGradient colors={["#66BB6A", "#2E7D32", "#1B5E20"]} style={styles.container}>
-      <Text style={styles.title}>{player.name}, ven al VAR</Text>
+    <LinearGradient colors={["#1A1A2E", "#0F3460", "#4D194D"]} style={styles.container}>
+      <Text style={styles.title}>{player.name}, tu turno</Text>
 
       <TouchableOpacity
         style={[styles.cardContainer, { 
-          shadowColor: "#000", // Sombra negra para resaltar en el césped
+          shadowColor: dynamicBorderColor, 
         }]}
-        onPress={() => { 
-          playSound("giro");
-          toggleFlip(); }}
+        onPress={toggleFlip}
         activeOpacity={0.9}
       >
-        {/* Frente (Cromo de Jugador / Camiseta) */}
-        <Animated.View 
-          style={[
-            styles.card, 
-            { backgroundColor: "#FFF" }, // Fondo blanco estilo tarjeta clásica
-            styles.cardBorderFrame,
-            { borderColor: dynamicBorderColor, backgroundColor: cardColor }, // Borde y fondo interno del color del jugador
-            frontStyle
-          ]}
-        >
-          <View style={styles.cardContent}>
-            <View style={styles.categoryDisplay}>
-                {/* Icono de trofeo o balón sutil arriba */}
-                <Text style={{fontSize: 40}}>🏆</Text>
-                <Text style={[styles.categoryText, { color: "#FFF" }]}>{category.toUpperCase()}</Text>
-                
-                {!isSubCategoryGeneralOrNull && (
-                    <Text style={[styles.subcategoryText, { color: "#EEE" }]}>
-                        {displaySubCategoryText}
-                    </Text>
-                )}
-            </View>
-            
-            <Text style={[
-                styles.cardPlayer, 
-                { 
-                    color: "#FFF",
-                    fontSize: dynamicNameFontSize,
-                    textShadowColor: 'rgba(0,0,0,0.5)',
-                    textShadowRadius: 5
-                }
-            ]}>
-                {player.name}
-            </Text>
-            <Text style={[styles.tapText, { color: "#FFF" }]}>Toca para ver tu Táctica</Text>
-          </View>
-        </Animated.View>
-
-        {/* Reverso (La Jugada Secreta) */}
+        {/* Frente (Muestra Categoría y Nombre del Jugador) */}
         <Animated.View 
           style={[
             styles.card, 
             { backgroundColor: cardColor }, 
             styles.cardBorderFrame,
-            { borderColor: "#FFF", borderWidth: 5 }, // Borde blanco interno en el reverso
+            { borderColor: dynamicBorderColor }, 
+            frontStyle
+          ]}
+        >
+          {/* Contenido centrado dentro de un View */}
+          <View style={styles.cardContent}>
+            <View style={styles.categoryDisplay}>
+                <Text style={[styles.categoryText, { color: dynamicTextColor }]}>{category.toUpperCase()}</Text>
+                
+                {/* Ocultar si es "General" */}
+                {!isSubCategoryGeneralOrNull && (
+                    <Text style={[styles.subcategoryText, { color: dynamicTextColor }]}>
+                        {displaySubCategoryText}
+                    </Text>
+                )}
+            </View>
+            {/* APLICACIÓN DINÁMICA DEL TAMAÑO DE NOMBRE */}
+            <Text style={[
+                styles.cardPlayer, 
+                { 
+                    color: dynamicTextColor,
+                    fontSize: dynamicNameFontSize, // <--- TAMAÑO AJUSTADO
+                }
+            ]}>
+                {player.name}
+            </Text>
+            <Text style={[styles.tapText, { color: dynamicTextColor }]}>Toca para ver tu palabra</Text>
+          </View>
+        </Animated.View>
+
+        {/* Reverso (Muestra Palabra/Impostor) */}
+        <Animated.View 
+          style={[
+            styles.card, 
+            { backgroundColor: cardColor }, 
+            styles.cardBorderFrame,
+            { borderColor: dynamicBorderColor }, 
             backStyle
           ]}
         >
+          {/* Contenido centrado dentro de un View */}
           <View style={styles.cardContent}>
 
             {isImpostor ? (
               <View style={styles.impostorContainer}>
-                <Text style={[styles.cardBack, { color: "#FFF", fontSize: dynamicWordFontSize, textShadowColor: 'rgba(0,0,0,0.8)' }]}>
-                    ¡SIMULADOR!
+                <Text style={[styles.cardBack, { color: dynamicTextColor, fontSize: dynamicWordFontSize }]}>
+                    IMPOSTOR
                 </Text>
                 
                 {hintsEnabled && (
                   <View style={styles.hintBox}>
-                    <Text style={styles.hintLabel}>Pista:</Text>
+                    <Text style={styles.hintLabel}>PISTA:</Text>
                     <Text style={styles.hintText}>{displayHint}</Text>
                   </View>
                 )}
                 
-                <Text style={[styles.impostorAdvice, { color: "#FFF" }]}>
-                    ¡Finge, que no te saquen la Roja!
+                {/* Mensaje de Impostor en la parte inferior */}
+                <Text style={[styles.impostorAdvice, { color: dynamicTextColor }]}>
+                    Trata de que no te descubran
                 </Text>
               </View>
             ) : (
-              <View style={{alignItems:'center'}}>
-                  <Text style={[styles.cardBack, { color: "#FFF", fontSize: dynamicWordFontSize, textShadowColor: 'rgba(0,0,0,0.8)' }]}>
-                    {paramWord}
-                  </Text>
-                  <Text style={[styles.impostorAdvice, { color: "#EEE", bottom: -60 }]}>
-                    Juega en equipo
-                  </Text>
-              </View>
+              <Text style={[styles.cardBack, { color: dynamicTextColor, fontSize: dynamicWordFontSize }]}>
+                {paramWord}
+              </Text>
             )}
           </View>
         </Animated.View>
@@ -309,15 +316,10 @@ export default function WordRevealScreen({ navigation }) {
 
       <TouchableOpacity
         style={[styles.button, styles.nextButton]}
-        onPress={() => {
-          if (index === players.length - 1) {
-            playSound('start');
-          }
-          next();
-        }}
+        onPress={next}
       >
         <Text style={styles.buttonText}>
-          {index === players.length - 1 ? "¡Pitazo Inicial!" : "Siguiente Jugador"}
+          {index === players.length - 1 ? "Listo para jugar" : "Siguiente jugador"}
         </Text>
       </TouchableOpacity>
     </LinearGradient>
@@ -334,121 +336,128 @@ const styles = StyleSheet.create({
   
   // --- Títulos ---
   title: {
-    fontSize: 38, 
-    color: "#FFF",
+    fontSize: 42, 
+    color: "#FFD93D",
     marginBottom: 20, 
     fontFamily: "LuckiestGuy_400Regular",
     textAlign: "center",
-    textShadowColor: "rgba(0,0,0,0.6)",
-    textShadowOffset: { width: 2, height: 2 },
-    textShadowRadius: 4,
+    textShadowColor: "rgba(0,0,0,0.9)",
+    textShadowOffset: { width: 3, height: 3 },
+    textShadowRadius: 6,
   },
   subtitle: { 
     fontSize: 22,
-    color: "#E8F5E9",
+    color: "#F8F9FA",
     marginBottom: 20, 
     fontFamily: "LuckiestGuy_400Regular",
     textAlign: "center",
-    opacity: 0.9
+    textShadowColor: "rgba(0,0,0,0.7)",
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 4,
   },
   
-  // --- Contenedor de Categorías ---
+  // --- Contenedor de Categorías (fuera de la carta) ---
   categoryBox: {
     width: "100%",
     maxWidth: 400,
-    backgroundColor: "rgba(0, 0, 0, 0.5)", // Fondo oscuro semitransparente
+    backgroundColor: "rgba(30, 30, 30, 0.9)",
     paddingVertical: 20,
     paddingHorizontal: 15,
     borderRadius: 15,
     borderWidth: 3,
-    borderColor: "#FFF", // Línea de cal
+    borderColor: "#415A77",
     shadowColor: "#000",
-    shadowOpacity: 0.5,
+    shadowOpacity: 0.8,
     shadowRadius: 10,
     elevation: 15,
   },
 
-  // --- Carta de Revelación (Estilo Cromo FUT) ---
+  // --- Carta de Revelación (3D Flip) ---
   cardContainer: { 
-    width: "85%", // Un poco más estrecha como carta de fútbol
-    maxWidth: 380, 
-    height: "60%",
+    width: "90%",
+    maxWidth: 400, 
+    height: "65%",
     minHeight: 400, 
     marginBottom: 30, 
     perspective: 1000, 
-    shadowOpacity: 0.6, 
-    shadowRadius: 15, 
-    shadowOffset: { width: 0, height: 8 }, 
-    elevation: 20,
+    shadowOpacity: 1, 
+    shadowRadius: 25, 
+    shadowOffset: { width: 0, height: 12 }, 
+    elevation: 25,
   },
   card: {
     width: "100%",
     height: "100%",
-    borderRadius: 20,
-    padding: 5, // Pequeño padding para el borde exterior
+    borderRadius: 35,
+    paddingHorizontal: 20, 
   },
   cardBorderFrame: {
-    borderWidth: 4, 
-    borderColor: '#FFD700', // Dorado por defecto (se sobreescribe dinámicamente)
+    borderWidth: 10, 
+    borderColor: '#FFD93D', 
     backgroundColor: '#1B263B', 
-    borderRadius: 20,
-    padding: 0, 
+    padding: 12, 
   },
   cardContent: {
     flex: 1, 
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: 14, // Ligeramente menos que la tarjeta
-    backgroundColor: "rgba(0,0,0,0.15)", // Sombreado interno sutil
+    borderRadius: 25, 
+    backgroundColor: "rgba(0,0,0,0.1)", 
     width: "100%", 
     height: "100%", 
-    paddingVertical: 20,
-    borderWidth: 2,
-    borderColor: "rgba(255,255,255,0.3)" // Borde interno fino
+    paddingVertical: 10,
   },
 
-  // --- Contenido Frente ---
+  // --- Contenido de Categoría (solo se usa en el frente de la carta) ---
   categoryDisplay: {
     position: 'absolute',
-    top: 20, 
+    top: 25, 
     width: '100%',
     alignItems: 'center',
     paddingHorizontal: 10,
   },
   categoryText: {
-    fontSize: 30,
+    fontSize: 34,
     fontFamily: "LuckiestGuy_400Regular",
-    marginTop: 5
   },
   subcategoryText: {
-    fontSize: 24, 
-    opacity: 0.9,
+    fontSize: 30, 
+    opacity: 0.7,
     fontFamily: "LuckiestGuy_400Regular",
-    marginTop: 5
+    textShadowColor: "rgba(255, 255, 255, 0.5)",
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 1,
   },
 
+  // --- Textos de la Carta ---
   cardPlayer: {
+    // El font size se aplica dinámicamente: fontSize: dynamicNameFontSize
     fontFamily: "LuckiestGuy_400Regular",
     textAlign: "center",
+    textShadowColor: "rgba(255, 255, 255, 1)", 
+    textShadowOffset: { width: 3, height: 3 },
+    textShadowRadius: 4,
     lineHeight: 85,
-    marginTop: 40, 
+    marginTop: 60, 
   },
   tapText: {
     position: 'absolute', 
-    bottom: 25,
+    bottom: 20,
     fontSize: 18, 
-    opacity: 0.9, 
+    opacity: 0.7, 
     fontFamily: "LuckiestGuy_400Regular",
-    textTransform: 'uppercase'
   },
   cardBack: {
+    // El font size se aplica dinámicamente: fontSize: dynamicWordFontSize
     fontFamily: "LuckiestGuy_400Regular",
     textAlign: "center",
+    textShadowColor: "rgba(255, 255, 255, 0.7)",
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 3,
     lineHeight: 60,
-    paddingHorizontal: 10
   },
   
-  // --- Impostor / VAR ---
+  // --- Contenido del Impostor ---
   impostorContainer: { 
     alignItems: "center", 
     justifyContent: "center", 
@@ -459,66 +468,68 @@ const styles = StyleSheet.create({
   },
   impostorAdvice: { 
     position: 'absolute', 
-    bottom: 30, 
-    fontSize: 20, 
-    opacity: 0.9, 
+    bottom: 20, 
+    fontSize: 18, 
+    opacity: 0.7, 
     fontFamily: "LuckiestGuy_400Regular",
     textAlign: 'center',
     width: '100%',
     paddingHorizontal: 10,
-    textShadowColor: 'rgba(0,0,0,0.5)',
-    textShadowRadius: 3
   },
   hintBox: {
     marginTop: 25, 
     padding: 15, 
-    backgroundColor: "rgba(0,0,0,0.6)", 
-    borderRadius: 10, 
+    backgroundColor: "rgba(0,0,0,0.5)", 
+    borderRadius: 15, 
     width: "90%",
     alignItems: "center",
     borderWidth: 2,
-    borderColor: '#FFEB3B', 
+    borderColor: '#FFD93D', 
   },
   hintLabel: {
-    fontSize: 20, 
-    color: "#FFEB3B", 
-    marginBottom: 5,
+    fontSize: 22, 
+    color: "#FFD93D", 
+    fontWeight: "bold",
+    opacity: 1,
+    marginBottom: 8,
     fontFamily: "LuckiestGuy_400Regular",
+    textShadowColor: "rgba(0, 0, 0, 0.7)",
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
   },
   hintText: {
-    fontSize: 28, 
+    fontSize: 32, 
     color: "#FFF", 
     textAlign: "center",
     fontFamily: "LuckiestGuy_400Regular",
+    textShadowColor: 'rgba(0, 0, 0, 1)',
+    textShadowOffset: {width: 2, height: 2},
+    textShadowRadius: 4,
   },
   
-  // --- Botones ---
+  // --- Botones Generales y de Siguiente ---
   button: {
     width: "100%",
     maxWidth: 380,
     paddingVertical: 18, 
     paddingHorizontal: 20,
-    borderRadius: 50, // Botones redondos estilo deporte
+    borderRadius: 18, 
     alignItems: 'center',
     marginVertical: 10,
     shadowColor: "#000",
-    shadowOpacity: 0.5, 
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 8,
-    borderWidth: 2,
-    borderColor: "rgba(255,255,255,0.2)"
+    shadowOpacity: 0.7, 
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 10,
   },
   nextButton: {
-    backgroundColor: "#FFEB3B", // Amarillo tarjeta
+    backgroundColor: "#FF595E", 
     marginTop: 20, 
-    borderColor: "#FBC02D"
   },
   buttonText: {
-    color: "#333", // Texto oscuro para botón amarillo
-    fontSize: 24, 
+    color: "#FFF",
+    fontSize: 26, 
     fontFamily: "LuckiestGuy_400Regular",
     textAlign: "center",
-    textTransform: "uppercase"
   },
 });

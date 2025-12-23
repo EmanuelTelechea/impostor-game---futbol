@@ -10,7 +10,7 @@ import {
   View,
 } from "react-native";
 import { GameContext } from "../context/GameContext";
-import { playSound } from "../utils/soundManager";
+import { playMusic, playSound, stopMusic } from "../utils/soundManager";
 
 export default function ResultScreen() {
   const navigation = useNavigation();
@@ -21,6 +21,14 @@ export default function ResultScreen() {
   const normalized = String(gameWinner || "").toLowerCase();
   const isImpostor = normalized === "impostor";
 
+  useEffect(() => {
+      playMusic(
+        "win",
+        require("../assets/music/win.mp3"),
+        0.3
+      );
+    }, []);
+    
   // ✅ HOOKS SIEMPRE ARRIBA (SIN CONDICIONES)
   useEffect(() => {
     if (!fontsLoaded) return;
@@ -152,6 +160,7 @@ export default function ResultScreen() {
             style={[styles.button, { backgroundColor: currentTheme.buttonColor }]}
             onPress={() => {
               playSound("click");
+              stopMusic();
               handlePlayAgain();
             }}
           >

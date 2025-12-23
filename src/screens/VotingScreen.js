@@ -1,11 +1,20 @@
 import { LuckiestGuy_400Regular, useFonts } from "@expo-google-fonts/luckiest-guy";
 import { LinearGradient } from "expo-linear-gradient";
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, Vibration, View } from "react-native";
 import { GameContext } from "../context/GameContext";
-import { playSound } from "../utils/soundManager";
+import { playMusic, playSound } from "../utils/soundManager";
 
 export default function VotingScreen({ navigation, route }) {
+
+  useEffect(() => {
+    playMusic(
+      "suspense",
+      require("../assets/music/suspense.mp3"),
+      0.3
+    );
+  }, []);
+
   // Nota: onEliminate viene de params, pero usamos la lógica interna para consistencia
   const { players, setPlayers, impostorIds, setGameWinner } = useContext(GameContext);
 
@@ -14,6 +23,7 @@ export default function VotingScreen({ navigation, route }) {
   // Carga de la fuente
   const [fontsLoaded] = useFonts({ LuckiestGuy_400Regular });
 
+  
   const eliminate = (id) => {
     Vibration.vibrate(100); // Vibración más fuerte como un silbatazo
 

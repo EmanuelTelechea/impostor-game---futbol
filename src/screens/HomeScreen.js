@@ -1,7 +1,7 @@
 import { LuckiestGuy_400Regular, useFonts } from "@expo-google-fonts/luckiest-guy";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useContext } from "react";
+import { useContext, useEffect } from "react";
 import {
   ActivityIndicator,
   Image,
@@ -13,12 +13,20 @@ import {
 import { GameContext } from "../context/GameContext";
 
 // Sound helpers
-import { playSound, setSoundEnabled as setSMEnabled } from "../utils/soundManager";
+import { playMusic, playSound, setSoundEnabled as setSMEnabled } from "../utils/soundManager";
 
 export default function HomeScreen({ navigation }) {
   const [fontsLoaded] = useFonts({ LuckiestGuy_400Regular });
   const { soundEnabled, setSoundEnabled } = useContext(GameContext);
 
+  useEffect(() => {
+    playMusic(
+      "menu",
+      require("../assets/music/menu.mp3"),
+      0.35
+    );
+  }, []);
+  
   // ⬇️ recién ahora el return condicional
   if (!fontsLoaded) {
     return <ActivityIndicator size="large" color="#FFF" />;

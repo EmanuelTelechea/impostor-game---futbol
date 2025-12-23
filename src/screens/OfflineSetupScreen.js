@@ -16,7 +16,7 @@ import {
   View
 } from "react-native";
 import { GameContext } from "../context/GameContext";
-import { playSound } from "../utils/soundManager";
+import { playMusic, playSound } from "../utils/soundManager";
 // Habilitar animaciones en Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -45,35 +45,20 @@ const crewColors = [
 ];
 
 const categoryIcons = {
-  futbol: "football-outline",
-  musica: "musical-notes-outline",
-  cine: "film-outline",
-  videojuegos: "game-controller-outline",
-  comida: "fast-food-outline",
-  animales: "paw-outline",
-  paises: "earth-outline",
-  general: "help-circle-outline",
+  general: "football-outline",
   jugadores: "people-outline",
-  equipos: "shield-outline", // Cambiado para fútbol
-  peliculas: "videocam-outline",
-  actores: "person-outline",
-  series: "tv-outline",
-  canciones: "headset-outline",
-  cantantes: "mic-outline",
-  marcas: "pricetag-outline",
-  tecnologia: "laptop-outline",
-  autos: "car-outline",
-  astronomia: "planet-outline",
-  moda: "shirt-outline",
-  arte: "color-palette-outline",
-  historia: "book-outline",
-  ciencia: "flask-outline",
-  literatura: "library-outline",
-  naturaleza: "leaf-outline",
-  deportes: "bicycle-outline",
-  juegos: "dice-outline",
-  television: "tv-outline",
-  lugares: "location-outline",
+  ligas: "trophy-outline",
+  selecciones: "flag-outline",
+  clubes: "shield-outline",
+  trofeos: "medal-outline",
+  partidos: "calendar-outline",
+  mundiales: "globe-outline",
+  dts: "person-circle-outline",
+  europeos: "logo-euro",
+  sudamericanos: "earth-outline",
+  restoDelMundo: "image-outline",
+  actuales: "time-outline",
+  historicos: "hourglass-outline",
 };
 
 export default function OfflineSetupScreen({ navigation }) {
@@ -88,6 +73,14 @@ export default function OfflineSetupScreen({ navigation }) {
 
   const [localPlayers, setLocalPlayers] = useState(Array.isArray(ctxPlayers) ? ctxPlayers : []);
   
+  useEffect(() => {
+      playMusic(
+        "game",
+        require("../assets/music/game.mp3"),
+        0.3
+      );
+    }, []);
+
   useEffect(() => {
     if (Array.isArray(ctxPlayers) && ctxPlayers.length !== localPlayers.length) {
       setLocalPlayers(ctxPlayers);

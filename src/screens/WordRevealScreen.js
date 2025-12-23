@@ -16,7 +16,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { GameContext } from "../context/GameContext";
-import { playSound } from "../utils/soundManager";
+import { playMusic, playSound } from "../utils/soundManager";
 
 // ----------------------------------------------------
 // FUNCIÓN DE AJUSTE DINÁMICO DEL TAMAÑO DE FUENTE (JUGADA)
@@ -92,6 +92,14 @@ export default function WordRevealScreen({ navigation }) {
     backfaceVisibility: "hidden",
     position: "absolute",
   }));
+
+  useEffect(() => {
+      playMusic(
+        "suspense",
+        require("../assets/music/suspense.mp3"),
+        0.3
+      );
+    }, []);
 
   useEffect(() => {
     if (paramWord && paramImpostorIds.length > 0) {

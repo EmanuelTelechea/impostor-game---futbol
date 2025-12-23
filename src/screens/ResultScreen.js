@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { showInterstitial } from "../ads/interstitialManager";
 import { GameContext } from "../context/GameContext";
 import { playMusic, playSound, stopMusic } from "../utils/soundManager";
 
@@ -158,9 +159,10 @@ export default function ResultScreen() {
         <View style={{ width: "100%", marginTop: 30 }}>
           <TouchableOpacity
             style={[styles.button, { backgroundColor: currentTheme.buttonColor }]}
-            onPress={() => {
+            onPress={async () => {
               playSound("click");
               stopMusic();
+              await showInterstitial();
               handlePlayAgain();
             }}
           >
@@ -171,8 +173,9 @@ export default function ResultScreen() {
 
           <TouchableOpacity
             style={[styles.button, { backgroundColor: "#CFD8DC" }]}
-            onPress={() => {
+            onPress={async () => {
               playSound("click");
+              await showInterstitial();
               handleBackToMenu();
             }}
           >

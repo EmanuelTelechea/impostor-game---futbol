@@ -3,6 +3,7 @@ import { createStackNavigator } from "@react-navigation/stack";
 import { useState } from "react";
 import "react-native-reanimated";
 
+import { initInterstitial } from "./src/ads/interstitialManager";
 import { GameProvider } from "./src/context/GameContext";
 import { SoundProvider } from "./src/context/SoundContext";
 
@@ -38,7 +39,10 @@ function AppNavigator() {
 
 export default function App() {
   const [appReady, setAppReady] = useState(false);
-
+  useEffect(() => {
+    initInterstitial();
+  }, []);
+  
   return (
     <GameProvider>
       <SoundProvider enabled={true}>
